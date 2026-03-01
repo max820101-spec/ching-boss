@@ -11,7 +11,7 @@
 <style>
 body{font-family:Arial;background:#0f1115;color:#eee;padding:15px}
 h2{margin-bottom:5px}
-input{padding:10px;width:170px}
+input{padding:10px;width:100%}
 button{padding:8px 12px;margin:4px;border:none;border-radius:6px}
 .add{background:#00aa66;color:#fff}
 .kill{background:#ffaa00}
@@ -32,7 +32,8 @@ font-weight:bold;
 <h2>🔥 檠檠BOSS團隊</h2>
 <div id="clock"></div>
 
-<input id="input" placeholder="958 53">
+<textarea id="input" rows="3" placeholder="761 53 762 53 763 K 764 R 765 0617"></textarea>
+<br>
 <button class="add" onclick="handleInput()">新增</button>
 <button class="copy" onclick="copyList()">複製清單</button>
 <button class="reset" onclick="resetAll()">重置全部</button>
@@ -58,18 +59,37 @@ projectId:"ching-fishboss-kill"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
-function nowTW(){return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}))}
-function fmt(t){return t.toTimeString().slice(0,5)}
-function updateClock(){clock.innerText="台灣時間 "+fmt(nowTW())}
-setInterval(updateClock,1000);updateClock();
+function nowTW(){
+return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
+}
+
+function fmt(t){
+return t.toTimeString().slice(0,5);
+}
+
+function updateClock(){
+clock.innerText="台灣時間 "+fmt(nowTW());
+}
+setInterval(updateClock,1000);
+updateClock();
 
 function handleInput(){
-let v=input.value.trim();
-if(!v)return;
-let [ch,arg]=v.split(" ");
-if(!arg)return;
+let raw=document.getElementById("input").value.trim();
+if(!raw)return;
 
-if(arg==="X"){deleteChannel(ch);input.value="";return}
+let tokens=raw.split(/\s+/);
+
+for(let i=0;i<tokens.length;i+=2){
+
+let ch=tokens[i];
+let arg=tokens[i+1];
+
+if(!ch||!arg) continue;
+
+if(arg==="X"){
+deleteChannel(ch);
+continue;
+}
 
 let type="confirmed";
 let start=null,end=null,time=null;
@@ -89,7 +109,8 @@ else if(arg.length===4){
 let h=parseInt(arg.slice(0,2));
 let m=parseInt(arg.slice(2));
 let d=nowTW();
-d.setHours(h);d.setMinutes(m);
+d.setHours(h);
+d.setMinutes(m);
 time=d.getTime();
 incrementKill();
 }
@@ -100,7 +121,9 @@ incrementKill();
 }
 
 db.collection("bosses").doc(ch).set({ch,type,time,start,end});
-input.value="";
+}
+
+document.getElementById("input").value="";
 }
 
 function incrementKill(){
@@ -124,7 +147,9 @@ incrementKill();
 
 function resetAll(){
 if(!confirm("確定清空全部資料？"))return;
-db.collection("bosses").get().then(s=>{s.forEach(d=>d.ref.delete())});
+db.collection("bosses").get().then(s=>{
+s.forEach(d=>d.ref.delete());
+});
 db.collection("stats").doc("today").delete();
 }
 
@@ -183,9 +208,13 @@ unconfirmed.innerHTML+=`
 });
 
 db.collection("stats").doc("today").onSnapshot(doc=>{
-if(!doc.exists){stats.innerHTML="今日 0 次";return}
+if(!doc.exists){
+stats.innerHTML="今日 0 次";
+return;
+}
 stats.innerHTML="今日 "+(doc.data().total||0)+" 次";
 });
 </script>
+
 </body>
 </html>
