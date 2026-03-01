@@ -45,6 +45,18 @@ border-radius:8px;cursor:pointer;font-weight:bold;
 .reset{background:#aa2222;color:#fff;}
 .copyNeed{background:#6c5ce7;color:#fff;}
 
+.actionBtn{
+margin-left:6px;
+padding:4px 8px;
+font-size:12px;
+border-radius:6px;
+cursor:pointer;
+border:none;
+}
+
+.btnKill{background:#00e676;color:#003300;}
+.btnRob{background:#ff1744;color:#fff;}
+
 .card{
 margin:8px 0;padding:12px;border-radius:12px;
 background:rgba(0,60,90,0.7);
@@ -115,7 +127,6 @@ h3{margin-top:25px;color:#7fdfff;}
 </div>
 
 <div id="clock"></div>
-
 <div id="stats"></div>
 <div id="milestone"></div>
 
@@ -159,6 +170,19 @@ if(e.key==="Enter" && e.shiftKey)return;
 if(e.key==="Enter"){e.preventDefault();handleInput();}
 }
 
+function markKill(ch){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"kill",created:Date.now()
+});
+incrementKill();
+}
+
+function markRob(ch){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"robbed",created:Date.now()
+});
+}
+
 function handleInput(){
 let raw=input.value.trim();
 if(!raw)return;
@@ -171,20 +195,8 @@ if(!ch||!arg)continue;
 
 if(arg==="X"){deleteChannel(ch);continue;}
 
-if(arg==="K"){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"kill",created:Date.now()
-});
-incrementKill();
-continue;
-}
-
-if(arg==="R"){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"robbed",created:Date.now()
-});
-continue;
-}
+if(arg==="K"){markKill(ch);continue;}
+if(arg==="R"){markRob(ch);continue;}
 
 let time=null;
 if(arg.length===4){
@@ -250,20 +262,10 @@ let needArr=[];
 
 s.forEach(doc=>{
 let d=doc.data();
-
 if(d.type==="confirmed") confirmedArr.push(d);
-
 if(d.type==="need") needArr.push(d);
-
-// 相容舊資料
-if(d.type==="unconfirmed"){
-d.status="kill";
-needArr.push(d);
-}
-if(d.type==="robbed"){
-d.status="robbed";
-needArr.push(d);
-}
+if(d.type==="unconfirmed"){d.status="kill";needArr.push(d);}
+if(d.type==="robbed"){d.status="robbed";needArr.push(d);}
 });
 
 confirmedArr.sort((a,b)=>a.time-b.time);
@@ -286,11 +288,22 @@ else if(index===3) cls="rank4";
 else if(index===4) cls="rank5";
 
 let text=fmt(new Date(d.time));
-if(diff===0) text+=" ⚔️ 重生";
+
+if(diff<0){
+text+="（遲）";
+}
+else if(diff===0){
+text+=" ⚔️ 重生";
+}
+else if(diff<=5){
+text+="（剩 "+diff+" 分）";
+}
 
 confirmed.innerHTML+=`
 <div class="card ${cls}">
 <b>${d.ch}</b> ${text}
+<button class="actionBtn btnKill" onclick="markKill('${d.ch}')">擊殺(K)</button>
+<button class="actionBtn btnRob" onclick="markRob('${d.ch}')">被搶(R)</button>
 </div>`;
 });
 
@@ -303,7 +316,7 @@ needConfirm.innerHTML+=`
 });
 });
 
-/* ===== 擊殺顯示 + 里程碑 ===== */
+/* ===== 擊殺 + 里程碑 ===== */
 let lastMilestone=0;
 
 db.collection("stats").doc("today").onSnapshot(doc=>{
