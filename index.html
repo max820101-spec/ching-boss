@@ -49,7 +49,6 @@ border-radius:8px;
 border:1px solid rgba(255,255,255,0.2);
 background:rgba(0,40,70,0.6);
 color:#e8f6ff;
-backdrop-filter:blur(4px);
 }
 
 button{
@@ -73,12 +72,7 @@ padding:12px;
 border-radius:12px;
 background:rgba(0,60,90,0.7);
 box-shadow:0 0 15px rgba(0,200,255,0.2);
-backdrop-filter:blur(6px);
 transition:0.3s;
-}
-
-.card:hover{
-box-shadow:0 0 20px rgba(0,255,255,0.5);
 }
 
 .late{
@@ -114,7 +108,7 @@ padding-bottom:4px;
 <body>
 
 <div class="logoWrap">
-  <img src="IMG_0391.png" class="logo">
+  <img src="./IMG_0391.png?v=1" class="logo">
   <h2>檠檠BOSS團隊</h2>
 </div>
 
@@ -237,9 +231,19 @@ db.collection("stats").doc("today").delete();
 
 function copyList(){
 let text="【檠檠BOSS團隊】\n\n";
-document.querySelectorAll(".card").forEach(c=>{
+
+document.querySelectorAll("#confirmed .card").forEach(c=>{
+let line=c.innerText
+.replace("擊殺(K)","")
+.replace("被搶(R)","")
+.trim();
+text+=line+"\n";
+});
+
+document.querySelectorAll("#unconfirmed .card").forEach(c=>{
 text+=c.innerText+"\n";
 });
+
 navigator.clipboard.writeText(text);
 alert("已複製清單");
 }
@@ -248,6 +252,7 @@ let cachedConfirmed=[];
 
 function renderTimers(){
 let now=nowTW().getTime();
+
 cachedConfirmed.forEach(item=>{
 let diff=Math.floor((item.time-now)/60000);
 let el=document.getElementById("timer_"+item.ch);
@@ -263,11 +268,13 @@ card.classList.add("late");
 return;
 }
 
-el.innerHTML=`${fmt(new Date(item.time))}（剩 ${diff} 分）`;
-
-if(diff<=5){
-card.classList.add("soon");
+if(diff>5){
+el.innerHTML=`${fmt(new Date(item.time))}`;
+return;
 }
+
+el.innerHTML=`${fmt(new Date(item.time))}（剩 ${diff} 分）`;
+card.classList.add("soon");
 });
 }
 
