@@ -1,3 +1,8 @@
+function nowTW(){
+  return new Date(
+    new Date().toLocaleString("en-US",{ timeZone:"Asia/Taipei" })
+  );
+}
 <!DOCTYPE html>
 <html>
 <head>
@@ -230,14 +235,14 @@ if(!ch||!arg)continue;
 
 if(arg==="K"){
 db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"kill",time:Date.now()
+ch,type:"need",status:"kill",time:nowTW().getTime()
 });
 continue;
 }
 
 if(arg==="R"){
 db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"rob",time:Date.now()
+ch,type:"need",status:"rob",time:nowTW().getTime()
 });
 continue;
 }
@@ -249,7 +254,7 @@ d.setHours(parseInt(arg.slice(0,2)));
 d.setMinutes(parseInt(arg.slice(2)));
 time=d.getTime();
 }else{
-time=Date.now()+parseInt(arg)*60000;
+time=nowTW().getTime()+parseInt(arg)*60000;
 }
 
 db.collection("bosses").doc(ch).set({
