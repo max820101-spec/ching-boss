@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>檠檠BOSS團隊</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial; background:#0f1115; color:#eee; padding:15px; }
+h2 { margin-bottom:5px; }
+#clock { margin-bottom:10px; font-size:14px; opacity:0.9; }
+input { padding:10px; width:160px; }
+button { padding:10px; margin:4px; border:none; border-radius:6px; cursor:pointer; }
+.add{background:#00aa66;color:white;}
+.kill{background:#ffaa00;color:black;}
+.card{margin:6px 0;padding:8px;background:#1a1f27;border-radius:8px;}
+.late{color:#ff4444;}
+</style>
+</head>
+<body>
+
+<h2>🔥 檠檠BOSS團隊</h2>
+<div id="clock"></div>
+
+<input id="input" placeholder="958 53">
+<button class="add" onclick="add()">新增</button>
+
+<h3>✅ 已確認</h3>
+<div id="confirmed"></div>
+
+<h3>⚠️ 未確認</h3>
+<div id="unconfirmed"></div>
+
+<h3>📊 今日擊殺統計</h3>
+<div id="stats"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyARK9NLOTdrqwkDX3dr9isdwEVGCih5Uno",
+  authDomain: "ching-fishboss-kill.firebaseapp.com",
+  projectId: "ching-fishboss-kill",
+  storageBucket: "ching-fishboss-kill.firebasestorage.app",
+  messagingSenderId: "866574993192",
+  appId: "1:866574993192:web:40b8bb0e8e74bd5d56321d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function nowTW(){
+return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
+}
+
+function fmt(t){return t.toTimeString().slice(0,5);}
+
+function updateClock(){
+document.getElementById("clock").innerText="台灣時間 "+fmt(nowTW());
+}
+setInterval(updateClock,1000);updateClock();
+
+async function add(){
+let v=document.getElementById("input").value.trim();
+if(!v)return;
+let [ch,val]=v.split(" ");
+let now=nowTW();
+let type="confirmed";
+let data={ch,type};
+
+if(val==="K"||val==="R"){
+type="unconfirmed";
+data={ch,type,start:now.getTime()+48*60000,end:now.getTime()+60*60000,stolen:val==="R"};
+}else if(/^\d+$/.test(val)){
+data={ch,type,time:now.getTime()+val*60000};
+}else if(val.length===4){
+let t=nowTW();
+t.setHours(val.slice(0,2));
+t.setMinutes(val.slice(2));
+data={ch,type,time:t.getTime()};
+}
+
+await addDoc(collection(db,"bosses"),data);
+document.getElementById("input").value="";
+}
+
+function render(){
+onSnapshot(collection(db,"bosses"),snap=>{
+let confirmed=[],unconfirmed=[];
+let now=nowTW().getTime();
+
+snap.forEach(docu=>{
+let d=docu.data();
+d.id=docu.id;
+if(d.type==="confirmed") confirmed.push(d);
+else unconfirmed.push(d);
+});
+
+confirmed.sort((a,b)=>a.time-b.time);
+
+let cdiv=document.getElementById("confirmed");
+let udiv=document.getElementById("unconfirmed");
+cdiv.innerHTML=""; udiv.innerHTML="";
+
+confirmed.forEach(d=>{
+let late=d.time<now;
+cdiv.innerHTML+=`
+<div class="card">
+<b>${d.ch}</b> ${fmt(new Date(d.time))}
+${late?'<span class="late"> 遲</span>':''}
+<button class="kill" onclick="kill('${d.id}','${d.ch}')">擊殺</button>
+</div>`;
+});
+
+unconfirmed.forEach(d=>{
+udiv.innerHTML+=`
+<div class="card">
+<b>${d.ch}</b> ${fmt(new Date(d.start))}~${fmt(new Date(d.end))}
+${d.stolen?" 被搶":""}
+</div>`;
+});
+});
+}
+
+async function kill(id,ch){
+await deleteDoc(doc(db,"bosses",id));
+let today=new Date().toISOString().slice(0,10);
+let ref=doc(db,"stats",today);
+let snap=await getDoc(ref);
+if(snap.exists()){
+let data=snap.data();
+data.total++;
+data[ch]=(data[ch]||0)+1;
+await setDoc(ref,data);
+}else{
+let data={total:1};
+data[ch]=1;
+await setDoc(ref,data);
+}
+}
+
+function renderStats(){
+let today=new Date().toISOString().slice(0,10);
+onSnapshot(doc(db,"stats",today),snap=>{
+let div=document.getElementById("stats");
+if(!snap.exists()){div.innerHTML="今日 0 次";return;}
+let d=snap.data();
+let html="總擊殺："+d.total+"<br>";
+for(let k in d){
+if(k!=="total") html+=k+"："+d[k]+"<br>";
+}
+div.innerHTML=html;
+});
+}
+
+render();
+renderStats();
+</script>
+
+</body>
+</html>
