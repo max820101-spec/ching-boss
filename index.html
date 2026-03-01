@@ -17,7 +17,7 @@ button{padding:6px 10px;margin:3px;border:none;border-radius:6px;cursor:pointer}
 .reset{background:#aa2222;color:#fff}
 .copy{background:#444;color:#fff}
 .card{margin:6px 0;padding:10px;background:#1a1f27;border-radius:8px;transition:0.3s}
-.late{color:#ff4444}
+.late{background:#3a0000;color:#ff4444;font-weight:bold;}
 .soon{background:#5a4a00;color:#ffdd55;font-weight:bold;}
 .unconfirmed{background:#2a1f1f}
 .robbed{background:#3a1212;color:#ff4d4d;font-weight:bold;}
@@ -66,12 +66,6 @@ return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
 function fmt(t){
 return t.toTimeString().slice(0,5);
 }
-
-function updateClock(){
-clock.innerText="台灣時間 "+fmt(nowTW());
-renderTimers();
-}
-setInterval(updateClock,1000);
 
 function handleKey(e){
 if(e.key==="Enter" && e.shiftKey){return;}
@@ -163,21 +157,36 @@ let cachedConfirmed=[];
 
 function renderTimers(){
 let now=nowTW().getTime();
+
 cachedConfirmed.forEach(item=>{
+
 let diff=Math.floor((item.time-now)/60000);
 let el=document.getElementById("timer_"+item.ch);
-if(!el) return;
+let card=document.getElementById("card_"+item.ch);
+
+if(!el||!card)return;
+
+card.classList.remove("soon");
+card.classList.remove("late");
+
+if(diff<0){
+el.innerHTML=`${fmt(new Date(item.time))}（遲）`;
+card.classList.add("late");
+return;
+}
 
 el.innerHTML=`${fmt(new Date(item.time))}（剩 ${diff} 分）`;
 
-let card=document.getElementById("card_"+item.ch);
-card.classList.remove("soon");
-
-if(diff<=5 && diff>=0){
+if(diff<=5){
 card.classList.add("soon");
 }
 });
 }
+
+setInterval(function(){
+clock.innerText="台灣時間 "+fmt(nowTW());
+renderTimers();
+},1000);
 
 db.collection("bosses").onSnapshot(s=>{
 let confirmedArr=[];
@@ -220,13 +229,17 @@ unconfirmed.innerHTML+=`
 <b>${d.ch}</b> ${fmt(new Date(d.start))} - ${fmt(new Date(d.end))}${label}
 </div>`;
 });
-
-renderTimers();
 });
 
 db.collection("stats").doc("today").onSnapshot(doc=>{
 if(!doc.exists){stats.innerHTML="今日 0 次";return;}
 stats.innerHTML="今日 "+(doc.data().total||0)+" 次";
+});
+
+document.addEventListener("visibilitychange",function(){
+if(!document.hidden){
+location.reload();
+}
 });
 </script>
 </body>
