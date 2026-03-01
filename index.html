@@ -137,7 +137,7 @@ text-shadow:
 
 <h3>📡 已確認頻道（<span id="count">0</span>）</h3>
 <div id="confirmed"></div>
-
+<button class="copyBtn" onclick="copyConfirmed()">一鍵複製已確認</button>
 <h3>📝 需要再確認</h3>
 <div id="need"></div>
 <button class="copyBtn" onclick="copyNeed()">一鍵複製未確認</button>
@@ -157,7 +157,9 @@ projectId:"ching-fishboss-kill"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const inc=firebase.firestore.FieldValue.increment;
-
+const confirmedDiv = document.getElementById("confirmed");
+const needDiv = document.getElementById("need");
+const countSpan = document.getElementById("count");
 let isCreator=false;
 
 function toggleCreator(){
@@ -286,9 +288,9 @@ if(d.type==="need")needArr.push(d);
 confirmedArr.sort((a,b)=>a.time-b.time);
 needArr.sort((a,b)=>b.time-a.time);
 
-count.innerText=confirmedArr.length;
+countSpan.innerText=confirmedArr.length;
 
-confirmed.innerHTML="";
+confirmedDiv.innerHTML=""
 confirmedArr.forEach((d,i)=>{
 let diff=Math.floor((d.time-Date.now())/60000);
 let cls=i<5?"rank"+(i+1):"";
@@ -308,9 +310,9 @@ confirmed.innerHTML+=`
 </div>`;
 });
 
-need.innerHTML="";
+needDiv.innerHTML=""
 needArr.forEach(d=>{
-let label=d.status==="rob"?"⚠️ 被搶":"擊殺";
+let label = d.status==="rob" ? "⚠️ 被搶" : "🔥 擊殺";
 need.innerHTML+=`
 <div class="card">
 <button class="delBtn" onclick="deleteCh('${d.ch}')">✕</button>
@@ -332,6 +334,14 @@ ch,type:"need",status:"rob",time:Date.now()
 }
 
 function copyNeed(){
+  function copyConfirmed(){
+let text="";
+document.querySelectorAll("#confirmed b").forEach(e=>{
+text+=e.innerText+" ";
+});
+navigator.clipboard.writeText(text);
+alert("已複製已確認頻道");
+}
 let text="";
 document.querySelectorAll("#need b").forEach(e=>{
 text+=e.innerText+" ";
@@ -382,7 +392,7 @@ let [eh,em]=d.end.split(":").map(Number);
 let diff=(eh*60+em)-(sh*60+sm);
 if(diff<0)diff+=1440;
 let h=Math.floor(diff/60);
-let m=diff%60;
+let m=diff%60;let label=d.status==="rob"?"⚠️ 被搶":"擊殺";
 duration=h+"小時"+m+"分";
 avg=(diff>0)?(d.total/(diff/60)).toFixed(1):"-";
 }
