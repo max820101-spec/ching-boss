@@ -9,22 +9,17 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{font-family:Arial;background:#0f1115;color:#eee;padding:15px}
-h2{margin-bottom:5px}
-input{padding:10px;width:100%}
-button{padding:8px 12px;margin:4px;border:none;border-radius:6px}
+body{font-family:Arial;background:#0f1115;color:#eee;padding:15px;max-width:900px;margin:auto}
+textarea{padding:10px;width:100%;border-radius:6px}
+button{padding:6px 10px;margin:3px;border:none;border-radius:6px;cursor:pointer}
 .add{background:#00aa66;color:#fff}
 .kill{background:#ffaa00}
 .reset{background:#aa2222;color:#fff}
 .copy{background:#444;color:#fff}
-.card{margin:6px 0;padding:8px;background:#1a1f27;border-radius:8px}
+.card{margin:6px 0;padding:10px;background:#1a1f27;border-radius:8px}
 .late{color:#ff4444}
 .unconfirmed{background:#2a1f1f}
-.robbed{
-background:#3a1212;
-color:#ff4d4d;
-font-weight:bold;
-}
+.robbed{background:#3a1212;color:#ff4d4d;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -32,7 +27,11 @@ font-weight:bold;
 <h2>🔥 檠檠BOSS團隊</h2>
 <div id="clock"></div>
 
-<textarea id="input" rows="3" placeholder="761 53 762 53 763 K 764 R 765 0617"></textarea>
+<textarea id="input" rows="3"
+placeholder="761 53 762 53 763 K 764 R 765 0617"
+onkeydown="handleKey(event)">
+</textarea>
+
 <br>
 <button class="add" onclick="handleInput()">新增</button>
 <button class="copy" onclick="copyList()">複製清單</button>
@@ -73,6 +72,21 @@ clock.innerText="台灣時間 "+fmt(nowTW());
 setInterval(updateClock,1000);
 updateClock();
 
+function handleKey(e){
+if(e.key==="Enter" && e.shiftKey){return;}
+if(e.key==="Enter"){
+e.preventDefault();
+handleInput();
+}
+}
+
+function processK(ch){
+let start=nowTW().getTime()+48*60000;
+let end=nowTW().getTime()+60*60000;
+db.collection("bosses").doc(ch).set({ch,type:"unconfirmed",start,end});
+incrementKill();
+}
+
 function handleInput(){
 let raw=document.getElementById("input").value.trim();
 if(!raw)return;
@@ -83,7 +97,6 @@ for(let i=0;i<tokens.length;i+=2){
 
 let ch=tokens[i];
 let arg=tokens[i+1];
-
 if(!ch||!arg) continue;
 
 if(arg==="X"){
@@ -91,36 +104,35 @@ deleteChannel(ch);
 continue;
 }
 
-let type="confirmed";
-let start=null,end=null,time=null;
-
-if(arg==="K"||arg==="R"){
-start=nowTW().getTime()+48*60000;
-end=nowTW().getTime()+60*60000;
+if(arg==="K"){
+processK(ch);
+continue;
+}
 
 if(arg==="R"){
-type="robbed"; // 不算擊殺
-}else{
-type="unconfirmed";
-incrementKill(); // K 算擊殺
+let start=nowTW().getTime()+48*60000;
+let end=nowTW().getTime()+60*60000;
+db.collection("bosses").doc(ch).set({ch,type:"robbed",start,end});
+continue;
 }
-}
-else if(arg.length===4){
+
+let time=null;
+
+if(arg.length===4){
 let h=parseInt(arg.slice(0,2));
 let m=parseInt(arg.slice(2));
 let d=nowTW();
 d.setHours(h);
 d.setMinutes(m);
 time=d.getTime();
-incrementKill();
 }
 else{
 let mins=parseInt(arg);
 time=nowTW().getTime()+mins*60000;
-incrementKill();
 }
 
-db.collection("bosses").doc(ch).set({ch,type,time,start,end});
+db.collection("bosses").doc(ch).set({ch,type:"confirmed",time});
+incrementKill();
 }
 
 document.getElementById("input").value="";
@@ -138,18 +150,9 @@ function deleteChannel(ch){
 db.collection("bosses").doc(ch).delete();
 }
 
-function killBoss(ch){
-let start=nowTW().getTime()+48*60000;
-let end=nowTW().getTime()+60*60000;
-db.collection("bosses").doc(ch).set({ch,type:"unconfirmed",start,end});
-incrementKill();
-}
-
 function resetAll(){
 if(!confirm("確定清空全部資料？"))return;
-db.collection("bosses").get().then(s=>{
-s.forEach(d=>d.ref.delete());
-});
+db.collection("bosses").get().then(s=>{s.forEach(d=>d.ref.delete())});
 db.collection("stats").doc("today").delete();
 }
 
@@ -187,7 +190,7 @@ confirmed.innerHTML+=`
 <div class="card">
 <b>${d.ch}</b> ${fmt(new Date(d.time))}
 ${late?'<span class="late"> 遲</span>':''}
-<button class="kill" onclick="killBoss('${d.ch}')">擊殺</button>
+<button class="kill" onclick="processK('${d.ch}')">擊殺(K)</button>
 </div>`;
 });
 
@@ -208,10 +211,7 @@ unconfirmed.innerHTML+=`
 });
 
 db.collection("stats").doc("today").onSnapshot(doc=>{
-if(!doc.exists){
-stats.innerHTML="今日 0 次";
-return;
-}
+if(!doc.exists){stats.innerHTML="今日 0 次";return;}
 stats.innerHTML="今日 "+(doc.data().total||0)+" 次";
 });
 </script>
