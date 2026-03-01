@@ -2,38 +2,190 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>測試</title>
+<title>檠檠BOSS團隊</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<style>
+body{font-family:Arial;background:#0f1115;color:#eee;padding:15px}
+h2{margin-bottom:5px}
+input{padding:10px;width:170px}
+button{padding:8px 12px;margin:4px;border:none;border-radius:6px}
+.add{background:#00aa66;color:#fff}
+.kill{background:#ffaa00}
+.reset{background:#aa2222;color:#fff}
+.copy{background:#444;color:#fff}
+.card{margin:6px 0;padding:8px;background:#1a1f27;border-radius:8px}
+.late{color:#ff4444}
+.unconfirmed{background:#2a1f1f}
+.robbed{
+background:#3a1212;
+color:#ff4d4d;
+font-weight:bold;
+}
+</style>
 </head>
 <body>
 
-<h2>Firestore 測試</h2>
+<h2>🔥 檠檠BOSS團隊</h2>
+<div id="clock"></div>
 
-<button onclick="testWrite()">寫入測試</button>
+<input id="input" placeholder="958 53">
+<button class="add" onclick="handleInput()">新增</button>
+<button class="copy" onclick="copyList()">複製清單</button>
+<button class="reset" onclick="resetAll()">重置全部</button>
+
+<h3>📡 目前頻道數</h3>
+<div id="channelCount"></div>
+
+<h3>✅ 已確認</h3>
+<div id="confirmed"></div>
+
+<h3>⚠️ 未確認</h3>
+<div id="unconfirmed"></div>
+
+<h3>📊 今日擊殺統計</h3>
+<div id="stats"></div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyARK9NLOTdrqwkDX3dr9isdwEVGCih5Uno",
-  authDomain: "ching-fishboss-kill.firebaseapp.com",
-  projectId: "ching-fishboss-kill"
+const firebaseConfig={
+apiKey:"AIzaSyARK9NLOTdrqwkDX3dr9isdwEVGCih5Uno",
+authDomain:"ching-fishboss-kill.firebaseapp.com",
+projectId:"ching-fishboss-kill"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
 
-function testWrite(){
-  db.collection("test").add({
-    time: new Date().toString()
-  }).then(()=>{
-    alert("寫入成功");
-  }).catch((error)=>{
-    alert("錯誤: " + error.message);
-  });
+function nowTW(){return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}))}
+function fmt(t){return t.toTimeString().slice(0,5)}
+function updateClock(){clock.innerText="台灣時間 "+fmt(nowTW())}
+setInterval(updateClock,1000);updateClock();
+
+function handleInput(){
+let v=input.value.trim();
+if(!v)return;
+let [ch,arg]=v.split(" ");
+if(!arg)return;
+
+if(arg==="X"){deleteChannel(ch);input.value="";return}
+
+let type="confirmed";
+let start=null,end=null,time=null;
+
+if(arg==="K"||arg==="R"){
+start=nowTW().getTime()+48*60000;
+end=nowTW().getTime()+60*60000;
+
+if(arg==="R"){
+type="robbed"; // 不算擊殺
+}else{
+type="unconfirmed";
+incrementKill(); // K 算擊殺
 }
-</script>
+}
+else if(arg.length===4){
+let h=parseInt(arg.slice(0,2));
+let m=parseInt(arg.slice(2));
+let d=nowTW();
+d.setHours(h);d.setMinutes(m);
+time=d.getTime();
+incrementKill();
+}
+else{
+let mins=parseInt(arg);
+time=nowTW().getTime()+mins*60000;
+incrementKill();
+}
 
+db.collection("bosses").doc(ch).set({ch,type,time,start,end});
+input.value="";
+}
+
+function incrementKill(){
+db.collection("stats").doc("today").get().then(doc=>{
+let total=0;
+if(doc.exists) total=doc.data().total||0;
+db.collection("stats").doc("today").set({total:total+1});
+});
+}
+
+function deleteChannel(ch){
+db.collection("bosses").doc(ch).delete();
+}
+
+function killBoss(ch){
+let start=nowTW().getTime()+48*60000;
+let end=nowTW().getTime()+60*60000;
+db.collection("bosses").doc(ch).set({ch,type:"unconfirmed",start,end});
+incrementKill();
+}
+
+function resetAll(){
+if(!confirm("確定清空全部資料？"))return;
+db.collection("bosses").get().then(s=>{s.forEach(d=>d.ref.delete())});
+db.collection("stats").doc("today").delete();
+}
+
+function copyList(){
+let text="【檠檠BOSS團隊】\n\n";
+document.querySelectorAll(".card").forEach(c=>{
+text+=c.innerText+"\n";
+});
+navigator.clipboard.writeText(text);
+alert("已複製清單");
+}
+
+db.collection("bosses").onSnapshot(s=>{
+let now=nowTW().getTime();
+let confirmedArr=[];
+let unconfirmedArr=[];
+
+channelCount.innerHTML="目前 "+s.size+" 個頻道";
+
+s.forEach(doc=>{
+let d=doc.data();
+if(d.type==="confirmed") confirmedArr.push(d);
+else unconfirmedArr.push(d);
+});
+
+confirmedArr.sort((a,b)=>a.time-b.time);
+unconfirmedArr.sort((a,b)=>a.start-b.start);
+
+confirmed.innerHTML="";
+unconfirmed.innerHTML="";
+
+confirmedArr.forEach(d=>{
+let late=d.time<now;
+confirmed.innerHTML+=`
+<div class="card">
+<b>${d.ch}</b> ${fmt(new Date(d.time))}
+${late?'<span class="late"> 遲</span>':''}
+<button class="kill" onclick="killBoss('${d.ch}')">擊殺</button>
+</div>`;
+});
+
+unconfirmedArr.forEach(d=>{
+let label="";
+let extraClass="unconfirmed";
+
+if(d.type==="robbed"){
+label=" ⚠️ 被搶";
+extraClass="robbed";
+}
+
+unconfirmed.innerHTML+=`
+<div class="card ${extraClass}">
+<b>${d.ch}</b> ${fmt(new Date(d.start))} - ${fmt(new Date(d.end))}${label}
+</div>`;
+});
+});
+
+db.collection("stats").doc("today").onSnapshot(doc=>{
+if(!doc.exists){stats.innerHTML="今日 0 次";return}
+stats.innerHTML="今日 "+(doc.data().total||0)+" 次";
+});
+</script>
 </body>
 </html>
