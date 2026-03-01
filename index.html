@@ -50,15 +50,59 @@ margin:8px 0;padding:12px;border-radius:12px;
 background:rgba(0,60,90,0.7);
 }
 
+/* 排名前5顏色 */
 .rank1{background:#ff2d2d !important;color:#fff;font-weight:bold;}
 .rank2{background:#8e44ad !important;color:#fff;font-weight:bold;}
 .rank3{background:#007bff !important;color:#fff;font-weight:bold;}
 .rank4{background:#00c853 !important;color:#fff;font-weight:bold;}
 .rank5{background:#ffd600 !important;color:#000;font-weight:bold;}
 
-.late{background:#5c0000 !important;color:#ff6b6b;font-weight:bold;}
-
 .robbed{color:#ff4d4d;font-weight:bold;}
+
+/* ===== 擊殺顯示 ===== */
+#stats{
+font-size:42px;
+font-weight:bold;
+margin:10px 0 5px 0;
+text-align:center;
+transition:0.3s;
+}
+
+#milestone{
+text-align:center;
+font-size:22px;
+font-weight:bold;
+margin-bottom:10px;
+opacity:0;
+transition:0.5s;
+}
+
+.milestoneShow{
+opacity:1;
+transform:scale(1.1);
+}
+
+.flash{
+animation:flashAnim 0.6s ease;
+}
+
+@keyframes flashAnim{
+0%{transform:scale(1);}
+50%{transform:scale(1.25);}
+100%{transform:scale(1);}
+}
+
+.level1{color:#ffd600;text-shadow:0 0 10px #ffd600;}
+.level2{color:#00e676;text-shadow:0 0 12px #00e676;}
+.level3{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
+.level4{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
+.level5{color:#ff1744;text-shadow:0 0 15px #ff1744;}
+.level6{
+background:linear-gradient(45deg,#ff0000,#ff9900,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:900;
+}
 
 h3{margin-top:25px;color:#7fdfff;}
 </style>
@@ -71,6 +115,9 @@ h3{margin-top:25px;color:#7fdfff;}
 </div>
 
 <div id="clock"></div>
+
+<div id="stats"></div>
+<div id="milestone"></div>
 
 <textarea id="input" rows="3"
 placeholder="761 53 762 0617 763 K 764 R"
@@ -91,9 +138,6 @@ onkeydown="handleKey(event)">
 <h3>📝 需要再確認</h3>
 <button class="copyNeed" onclick="copyNeed()">複製需要再確認</button>
 <div id="needConfirm"></div>
-
-<h3>📊 今日擊殺統計</h3>
-<div id="stats"></div>
 
 <script>
 const firebaseConfig={
@@ -206,8 +250,20 @@ let needArr=[];
 
 s.forEach(doc=>{
 let d=doc.data();
+
 if(d.type==="confirmed") confirmedArr.push(d);
+
 if(d.type==="need") needArr.push(d);
+
+// 相容舊資料
+if(d.type==="unconfirmed"){
+d.status="kill";
+needArr.push(d);
+}
+if(d.type==="robbed"){
+d.status="robbed";
+needArr.push(d);
+}
 });
 
 confirmedArr.sort((a,b)=>a.time-b.time);
@@ -223,8 +279,7 @@ let now=nowTW().getTime();
 let diff=Math.floor((d.time-now)/60000);
 
 let cls="";
-if(diff<0) cls="late";
-else if(index===0) cls="rank1";
+if(index===0) cls="rank1";
 else if(index===1) cls="rank2";
 else if(index===2) cls="rank3";
 else if(index===3) cls="rank4";
@@ -232,7 +287,6 @@ else if(index===4) cls="rank5";
 
 let text=fmt(new Date(d.time));
 if(diff===0) text+=" ⚔️ 重生";
-if(diff<0) text+="（遲）";
 
 confirmed.innerHTML+=`
 <div class="card ${cls}">
@@ -249,11 +303,44 @@ needConfirm.innerHTML+=`
 });
 });
 
+/* ===== 擊殺顯示 + 里程碑 ===== */
+let lastMilestone=0;
+
 db.collection("stats").doc("today").onSnapshot(doc=>{
 let total=0;
 if(doc.exists) total=doc.data().total||0;
-stats.innerHTML="今日擊殺："+total;
+
+let levelClass="level1";
+if(total>=500) levelClass="level6";
+else if(total>=300) levelClass="level5";
+else if(total>=200) levelClass="level4";
+else if(total>=100) levelClass="level3";
+else if(total>=50) levelClass="level2";
+
+stats.classList.remove("level1","level2","level3","level4","level5","level6","flash");
+stats.classList.add(levelClass);
+
+stats.innerHTML="🔥 今日擊殺："+total+" ❗";
+
+stats.classList.add("flash");
+setTimeout(()=>{stats.classList.remove("flash");},600);
+
+let milestones=[50,100,200,300,500];
+for(let m of milestones){
+if(total===m && lastMilestone!==m){
+lastMilestone=m;
+showMilestone(m);
+}
+}
 });
+
+function showMilestone(num){
+milestone.innerHTML="🎉 "+num+" 達成！";
+milestone.classList.add("milestoneShow");
+setTimeout(()=>{
+milestone.classList.remove("milestoneShow");
+},3000);
+}
 </script>
 </body>
 </html>
