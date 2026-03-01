@@ -14,6 +14,7 @@ textarea{padding:10px;width:100%;border-radius:6px}
 button{padding:6px 10px;margin:3px;border:none;border-radius:6px;cursor:pointer}
 .add{background:#00aa66;color:#fff}
 .kill{background:#ffaa00}
+.robBtn{background:#990000;color:#fff}
 .reset{background:#aa2222;color:#fff}
 .copy{background:#444;color:#fff}
 .card{margin:6px 0;padding:10px;background:#1a1f27;border-radius:8px;transition:0.3s}
@@ -82,6 +83,12 @@ db.collection("bosses").doc(ch).set({ch,type:"unconfirmed",start,end});
 incrementKill();
 }
 
+function processR(ch){
+let start=nowTW().getTime()+48*60000;
+let end=nowTW().getTime()+60*60000;
+db.collection("bosses").doc(ch).set({ch,type:"robbed",start,end});
+}
+
 function handleInput(){
 let raw=document.getElementById("input").value.trim();
 if(!raw)return;
@@ -96,13 +103,7 @@ if(!ch||!arg) continue;
 
 if(arg==="X"){ deleteChannel(ch); continue; }
 if(arg==="K"){ processK(ch); continue; }
-
-if(arg==="R"){
-let start=nowTW().getTime()+48*60000;
-let end=nowTW().getTime()+60*60000;
-db.collection("bosses").doc(ch).set({ch,type:"robbed",start,end});
-continue;
-}
+if(arg==="R"){ processR(ch); continue; }
 
 let time=null;
 
@@ -159,7 +160,6 @@ function renderTimers(){
 let now=nowTW().getTime();
 
 cachedConfirmed.forEach(item=>{
-
 let diff=Math.floor((item.time-now)/60000);
 let el=document.getElementById("timer_"+item.ch);
 let card=document.getElementById("card_"+item.ch);
@@ -214,6 +214,7 @@ confirmed.innerHTML+=`
 <b>${d.ch}</b>
 <span id="timer_${d.ch}">${fmt(new Date(d.time))}</span>
 <button class="kill" onclick="processK('${d.ch}')">擊殺(K)</button>
+<button class="robBtn" onclick="processR('${d.ch}')">被搶(R)</button>
 </div>`;
 });
 
