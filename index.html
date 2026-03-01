@@ -24,11 +24,7 @@ margin:auto;
 min-height:100vh;
 }
 
-.logoWrap{
-text-align:center;
-margin-bottom:10px;
-}
-
+.logoWrap{text-align:center;margin-bottom:10px;}
 .logo{
 width:140px;
 margin-bottom:5px;
@@ -75,22 +71,21 @@ box-shadow:0 0 15px rgba(0,200,255,0.2);
 transition:0.3s;
 }
 
+/* 遲 */
 .late{
-background:rgba(80,0,0,0.85);
+background:#5c0000 !important;
 color:#ff6b6b;
 font-weight:bold;
 }
 
-.soon{
-background:rgba(255,180,0,0.3);
-color:#ffe066;
-font-weight:bold;
-}
+/* 高對比 1~5 分 */
+.soon1{ background:#ff2d2d !important; color:#fff; font-weight:bold;} /* 0分 */
+.soon2{ background:#8e44ad !important; color:#fff; font-weight:bold;} /* 1分 */
+.soon3{ background:#007bff !important; color:#fff; font-weight:bold;} /* 2分 */
+.soon4{ background:#00c853 !important; color:#fff; font-weight:bold;} /* 3分 */
+.soon5{ background:#ffd600 !important; color:#000; font-weight:bold;} /* 4或5分 */
 
-.unconfirmed{
-background:rgba(40,30,50,0.6);
-}
-
+.unconfirmed{background:rgba(40,30,50,0.6);}
 .robbed{
 background:rgba(100,0,0,0.8);
 color:#ff4d4d;
@@ -144,21 +139,16 @@ projectId:"ching-fishboss-kill"
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const increment = firebase.firestore.FieldValue.increment;
 
 function nowTW(){
 return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
 }
-
-function fmt(t){
-return t.toTimeString().slice(0,5);
-}
+function fmt(t){return t.toTimeString().slice(0,5);}
 
 function handleKey(e){
 if(e.key==="Enter" && e.shiftKey){return;}
-if(e.key==="Enter"){
-e.preventDefault();
-handleInput();
-}
+if(e.key==="Enter"){e.preventDefault();handleInput();}
 }
 
 function processK(ch){
@@ -167,7 +157,6 @@ let end=nowTW().getTime()+60*60000;
 db.collection("bosses").doc(ch).set({ch,type:"unconfirmed",start,end});
 incrementKill();
 }
-
 function processR(ch){
 let start=nowTW().getTime()+48*60000;
 let end=nowTW().getTime()+60*60000;
@@ -177,7 +166,6 @@ db.collection("bosses").doc(ch).set({ch,type:"robbed",start,end});
 function handleInput(){
 let raw=document.getElementById("input").value.trim();
 if(!raw)return;
-
 let tokens=raw.split(/\s+/);
 
 for(let i=0;i<tokens.length;i+=2){
@@ -185,43 +173,34 @@ let ch=tokens[i];
 let arg=tokens[i+1];
 if(!ch||!arg) continue;
 
-if(arg==="X"){ deleteChannel(ch); continue; }
-if(arg==="K"){ processK(ch); continue; }
-if(arg==="R"){ processR(ch); continue; }
+if(arg==="X"){deleteChannel(ch);continue;}
+if(arg==="K"){processK(ch);continue;}
+if(arg==="R"){processR(ch);continue;}
 
 let time=null;
-
 if(arg.length===4){
 let h=parseInt(arg.slice(0,2));
 let m=parseInt(arg.slice(2));
 let d=nowTW();
-d.setHours(h);
-d.setMinutes(m);
+d.setHours(h); d.setMinutes(m);
 time=d.getTime();
-}
-else{
+}else{
 let mins=parseInt(arg);
 time=nowTW().getTime()+mins*60000;
 }
-
 db.collection("bosses").doc(ch).set({ch,type:"confirmed",time});
 incrementKill();
 }
-
 document.getElementById("input").value="";
 }
 
 function incrementKill(){
-db.collection("stats").doc("today").get().then(doc=>{
-let total=0;
-if(doc.exists) total=doc.data().total||0;
-db.collection("stats").doc("today").set({total:total+1});
-});
+db.collection("stats").doc("today").set({
+total: increment(1)
+},{merge:true});
 }
 
-function deleteChannel(ch){
-db.collection("bosses").doc(ch).delete();
-}
+function deleteChannel(ch){db.collection("bosses").doc(ch).delete();}
 
 function resetAll(){
 if(!confirm("確定清空全部資料？"))return;
@@ -231,19 +210,14 @@ db.collection("stats").doc("today").delete();
 
 function copyList(){
 let text="【檠檠BOSS團隊】\n\n";
-
 document.querySelectorAll("#confirmed .card").forEach(c=>{
-let line=c.innerText
-.replace("擊殺(K)","")
-.replace("被搶(R)","")
-.trim();
+let line=c.innerText.replace("擊殺(K)","")
+.replace("被搶(R)","").trim();
 text+=line+"\n";
 });
-
 document.querySelectorAll("#unconfirmed .card").forEach(c=>{
 text+=c.innerText+"\n";
 });
-
 navigator.clipboard.writeText(text);
 alert("已複製清單");
 }
@@ -259,22 +233,24 @@ let el=document.getElementById("timer_"+item.ch);
 let card=document.getElementById("card_"+item.ch);
 if(!el||!card)return;
 
-card.classList.remove("soon");
-card.classList.remove("late");
+card.classList.remove("soon1","soon2","soon3","soon4","soon5","late");
 
 if(diff<0){
 el.innerHTML=`${fmt(new Date(item.time))}（遲）`;
 card.classList.add("late");
 return;
 }
-
-if(diff>5){
-el.innerHTML=`${fmt(new Date(item.time))}`;
+if(diff===0){
+el.innerHTML=`${fmt(new Date(item.time))} ⚔️ 重生`;
+card.classList.add("soon1");
 return;
 }
-
+if(diff<=5){
 el.innerHTML=`${fmt(new Date(item.time))}（剩 ${diff} 分）`;
-card.classList.add("soon");
+card.classList.add("soon"+(diff+1));
+return;
+}
+el.innerHTML=`${fmt(new Date(item.time))}`;
 });
 }
 
@@ -287,7 +263,6 @@ db.collection("bosses").onSnapshot(s=>{
 let confirmedArr=[];
 let unconfirmedArr=[];
 cachedConfirmed=[];
-
 channelCount.innerHTML="目前 "+s.size+" 個頻道";
 
 s.forEach(doc=>{
@@ -316,15 +291,18 @@ confirmed.innerHTML+=`
 unconfirmedArr.forEach(d=>{
 let label="";
 let extraClass="unconfirmed";
-if(d.type==="robbed"){
-label=" ⚠️ 被搶";
-extraClass="robbed";
-}
+if(d.type==="robbed"){label=" ⚠️ 被搶";extraClass="robbed";}
 unconfirmed.innerHTML+=`
 <div class="card ${extraClass}">
 <b>${d.ch}</b> ${fmt(new Date(d.start))} - ${fmt(new Date(d.end))}${label}
 </div>`;
 });
+});
+
+db.collection("stats").doc("today").onSnapshot(doc=>{
+let total=0;
+if(doc.exists) total=doc.data().total||0;
+stats.innerHTML="今日擊殺："+total;
 });
 </script>
 </body>
