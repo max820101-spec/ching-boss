@@ -23,6 +23,13 @@ margin:auto;
 min-height:100vh;
 }
 
+.logo{
+display:block;
+margin:0 auto 10px auto;
+width:150px;
+filter:drop-shadow(0 0 10px rgba(0,200,255,0.8));
+}
+
 textarea{
 padding:10px;width:100%;
 border-radius:8px;
@@ -76,7 +83,7 @@ font-weight:bold;
 }
 
 #stats{
-font-size:40px;
+font-size:42px;
 font-weight:bold;
 text-align:center;
 margin:10px 0;
@@ -106,10 +113,13 @@ animation:flash 0.6s;
 100%{transform:scale(1);}
 }
 
+h2{text-align:center;}
 h3{margin-top:25px;}
 </style>
 </head>
 <body>
+
+<img src="IMG_0391.png" class="logo">
 
 <h2>檠檠BOSS團隊</h2>
 <div id="clock"></div>
@@ -226,7 +236,7 @@ confirmed.innerHTML+=`
 });
 });
 
-/* ===== 今日擊殺 + 顏色 + 里程碑 ===== */
+/* ===== 今日擊殺顯示 ===== */
 const milestones=[50,100,120,150,200,250];
 let lastMilestone=0;
 
@@ -259,44 +269,50 @@ setTimeout(()=>milestone.classList.remove("milestoneShow"),3000);
 }
 });
 
-/* ===== 重置 + 歷史保存 ===== */
+/* ===== 重置 + 存歷史 ===== */
 async function resetAll(){
 if(!confirm("確定重置？會保存今日戰報"))return;
 
 let todayDoc=await db.collection("stats").doc("today").get();
+
+let total=0;
+let start="-";
+let end="-";
+
 if(todayDoc.exists){
 let d=todayDoc.data();
-let total=d.total||0;
-let start=d.startTime||"-";
-let end=d.endTime||"-";
-
-let now=nowTW();
-let dateStr=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,'0')+"-"+String(now.getDate()).padStart(2,'0');
-
-await db.collection("stats").doc("history")
-.collection("days").doc(dateStr)
-.set({total,startTime:start,endTime:end});
+total=d.total||0;
+start=d.startTime||"-";
+end=d.endTime||"-";
 }
 
-let bosses=await db.collection("bosses").get();
-bosses.forEach(d=>d.ref.delete());
-await db.collection("stats").doc("today").delete();
+let now=nowTW();
+let dateStr=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,'0')+"-"+String(now.getDate()).padStart(2,'0')+"_"+fmt(now);
 
-/* 只留3天 */
-let snap=await db.collection("stats").doc("history")
-.collection("days")
+await db.collection("historyDays").doc(dateStr).set({
+total:total,
+startTime:start,
+endTime:end
+});
+
+/* 只留3筆 */
+let snap=await db.collection("historyDays")
 .orderBy(firebase.firestore.FieldPath.documentId(),"desc")
 .get();
+
 let count=0;
 for(let doc of snap.docs){
 count++;
 if(count>3) await doc.ref.delete();
 }
+
+let bosses=await db.collection("bosses").get();
+bosses.forEach(d=>d.ref.delete());
+await db.collection("stats").doc("today").delete();
 }
 
 /* ===== 歷史顯示 ===== */
-db.collection("stats").doc("history")
-.collection("days")
+db.collection("historyDays")
 .orderBy(firebase.firestore.FieldPath.documentId(),"desc")
 .limit(3)
 .onSnapshot(snapshot=>{
@@ -306,9 +322,10 @@ let d=doc.data();
 let duration="-";
 let avg="-";
 
-if(d.startTime&&d.endTime){
+if(d.startTime&&d.endTime&&d.startTime!=="-"&&d.endTime!=="-"){
 let [sh,sm]=d.startTime.split(":").map(Number);
 let [eh,em]=d.endTime.split(":").map(Number);
+
 let start=sh*60+sm;
 let end=eh*60+em;
 let diff=end-start;
