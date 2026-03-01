@@ -61,11 +61,26 @@ margin-right:6px;
 font-size:12px;
 }
 
+/* ===== 擊殺顏色等級 ===== */
+.level1{color:#ffd600;text-shadow:0 0 10px #ffd600;}
+.level2{color:#00e676;text-shadow:0 0 12px #00e676;}
+.level3{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
+.level4{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
+.level5{color:#ff9800;text-shadow:0 0 15px #ff9800;}
+.level6{color:#ff1744;text-shadow:0 0 15px #ff1744;}
+.level7{
+background:linear-gradient(45deg,#ff0000,#ff9900,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:bold;
+}
+
 #stats{
 font-size:40px;
 font-weight:bold;
 text-align:center;
 margin:10px 0;
+transition:0.3s;
 }
 
 #milestone{
@@ -139,9 +154,7 @@ let doc=await db.collection("stats").doc("today").get();
 
 if(!doc.exists){
 await db.collection("stats").doc("today").set({
-total:1,
-startTime:timeStr,
-endTime:timeStr
+total:1,startTime:timeStr,endTime:timeStr
 });
 }else{
 await db.collection("stats").doc("today").update({
@@ -213,13 +226,24 @@ confirmed.innerHTML+=`
 });
 });
 
-/* ===== 今日擊殺 + 里程碑 ===== */
+/* ===== 今日擊殺 + 顏色 + 里程碑 ===== */
 const milestones=[50,100,120,150,200,250];
 let lastMilestone=0;
 
 db.collection("stats").doc("today").onSnapshot(doc=>{
 let total=0;
 if(doc.exists) total=doc.data().total||0;
+
+let level="level1";
+if(total>=250) level="level7";
+else if(total>=200) level="level6";
+else if(total>=150) level="level5";
+else if(total>=120) level="level4";
+else if(total>=100) level="level3";
+else if(total>=50) level="level2";
+
+stats.className="";
+stats.classList.add(level);
 
 stats.innerHTML="🔥 今日擊殺："+total+" ❗";
 stats.classList.add("flash");
