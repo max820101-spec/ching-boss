@@ -9,24 +9,115 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{font-family:Arial;background:#0f1115;color:#eee;padding:15px;max-width:900px;margin:auto}
-textarea{padding:10px;width:100%;border-radius:6px}
-button{padding:6px 10px;margin:3px;border:none;border-radius:6px;cursor:pointer}
-.add{background:#00aa66;color:#fff}
-.kill{background:#ffaa00}
-.robBtn{background:#990000;color:#fff}
-.reset{background:#aa2222;color:#fff}
-.copy{background:#444;color:#fff}
-.card{margin:6px 0;padding:10px;background:#1a1f27;border-radius:8px;transition:0.3s}
-.late{background:#3a0000;color:#ff4444;font-weight:bold;}
-.soon{background:#5a4a00;color:#ffdd55;font-weight:bold;}
-.unconfirmed{background:#2a1f1f}
-.robbed{background:#3a1212;color:#ff4d4d;font-weight:bold;}
+body{
+font-family:Arial;
+background:
+linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
+url("https://megapx-assets.dcard.tw/images/c7fe52fd-3629-450a-9bd7-6a3c81480b6a/640.jpeg");
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
+color:#e8f6ff;
+padding:15px;
+max-width:900px;
+margin:auto;
+min-height:100vh;
+}
+
+.logoWrap{
+text-align:center;
+margin-bottom:10px;
+}
+
+.logo{
+width:140px;
+margin-bottom:5px;
+filter: drop-shadow(0 0 10px rgba(0,200,255,0.7));
+}
+
+h2{
+text-align:center;
+letter-spacing:2px;
+color:#7fdfff;
+text-shadow:0 0 10px rgba(0,200,255,0.7);
+}
+
+textarea{
+padding:10px;
+width:100%;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.2);
+background:rgba(0,40,70,0.6);
+color:#e8f6ff;
+backdrop-filter:blur(4px);
+}
+
+button{
+padding:6px 10px;
+margin:4px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.add{background:#00bcd4;color:#001c2b;}
+.kill{background:#00e5ff;color:#003344;}
+.robBtn{background:#8b0000;color:#fff;}
+.reset{background:#aa2222;color:#fff;}
+.copy{background:#045d75;color:#fff;}
+
+.card{
+margin:8px 0;
+padding:12px;
+border-radius:12px;
+background:rgba(0,60,90,0.7);
+box-shadow:0 0 15px rgba(0,200,255,0.2);
+backdrop-filter:blur(6px);
+transition:0.3s;
+}
+
+.card:hover{
+box-shadow:0 0 20px rgba(0,255,255,0.5);
+}
+
+.late{
+background:rgba(80,0,0,0.85);
+color:#ff6b6b;
+font-weight:bold;
+}
+
+.soon{
+background:rgba(255,180,0,0.3);
+color:#ffe066;
+font-weight:bold;
+}
+
+.unconfirmed{
+background:rgba(40,30,50,0.6);
+}
+
+.robbed{
+background:rgba(100,0,0,0.8);
+color:#ff4d4d;
+font-weight:bold;
+}
+
+h3{
+margin-top:25px;
+color:#7fdfff;
+border-bottom:1px solid rgba(255,255,255,0.1);
+padding-bottom:4px;
+}
 </style>
 </head>
 <body>
 
-<h2>🔥 檠檠BOSS團隊</h2>
+<div class="logoWrap">
+  <img src="IMG_0391.png" class="logo">
+  <h2>檠檠BOSS團隊</h2>
+</div>
+
 <div id="clock"></div>
 
 <textarea id="input" rows="3"
@@ -96,7 +187,6 @@ if(!raw)return;
 let tokens=raw.split(/\s+/);
 
 for(let i=0;i<tokens.length;i+=2){
-
 let ch=tokens[i];
 let arg=tokens[i+1];
 if(!ch||!arg) continue;
@@ -158,12 +248,10 @@ let cachedConfirmed=[];
 
 function renderTimers(){
 let now=nowTW().getTime();
-
 cachedConfirmed.forEach(item=>{
 let diff=Math.floor((item.time-now)/60000);
 let el=document.getElementById("timer_"+item.ch);
 let card=document.getElementById("card_"+item.ch);
-
 if(!el||!card)return;
 
 card.classList.remove("soon");
@@ -230,17 +318,6 @@ unconfirmed.innerHTML+=`
 <b>${d.ch}</b> ${fmt(new Date(d.start))} - ${fmt(new Date(d.end))}${label}
 </div>`;
 });
-});
-
-db.collection("stats").doc("today").onSnapshot(doc=>{
-if(!doc.exists){stats.innerHTML="今日 0 次";return;}
-stats.innerHTML="今日 "+(doc.data().total||0)+" 次";
-});
-
-document.addEventListener("visibilitychange",function(){
-if(!document.hidden){
-location.reload();
-}
 });
 </script>
 </body>
