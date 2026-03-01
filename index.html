@@ -2,122 +2,37 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>檠檠BOSS團隊</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>測試</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<style>
-body { font-family: Arial; background:#0f1115; color:#eee; padding:15px; }
-input { padding:10px; width:160px; }
-button { padding:10px; margin:4px; border:none; border-radius:6px; }
-.add{background:#00aa66;color:white;}
-.kill{background:#ffaa00;color:black;}
-.card{margin:6px 0;padding:8px;background:#1a1f27;border-radius:8px;}
-.late{color:#ff4444;}
-</style>
 </head>
 <body>
 
-<h2>🔥 檠檠BOSS團隊</h2>
-<div id="clock"></div>
+<h2>Firestore 測試</h2>
 
-<input id="input" placeholder="958 53">
-<button class="add" onclick="addBoss()">新增</button>
-
-<h3>✅ 已確認</h3>
-<div id="confirmed"></div>
-
-<h3>📊 今日擊殺統計</h3>
-<div id="stats"></div>
+<button onclick="testWrite()">寫入測試</button>
 
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyARK9NLOTdrqwkDX3dr9isdwEVGCih5Uno",
   authDomain: "ching-fishboss-kill.firebaseapp.com",
-  projectId: "ching-fishboss-kill",
-  storageBucket: "ching-fishboss-kill.firebasestorage.app",
-  messagingSenderId: "866574993192",
-  appId: "1:866574993192:web:40b8bb0e8e74bd5d56321d"
+  projectId: "ching-fishboss-kill"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-function nowTW(){
-return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
+function testWrite(){
+  db.collection("test").add({
+    time: new Date().toString()
+  }).then(()=>{
+    alert("寫入成功");
+  }).catch((error)=>{
+    alert("錯誤: " + error.message);
+  });
 }
-
-function fmt(t){return t.toTimeString().slice(0,5);}
-
-function updateClock(){
-document.getElementById("clock").innerText="台灣時間 "+fmt(nowTW());
-}
-setInterval(updateClock,1000);updateClock();
-
-function addBoss(){
-let v=document.getElementById("input").value.trim();
-if(!v)return;
-let parts=v.split(" ");
-let ch=parts[0];
-let mins=parseInt(parts[1]);
-let time=nowTW().getTime()+mins*60000;
-
-db.collection("bosses").add({
-ch:ch,
-time:time
-});
-
-document.getElementById("input").value="";
-}
-
-db.collection("bosses").onSnapshot(snapshot=>{
-let div=document.getElementById("confirmed");
-div.innerHTML="";
-snapshot.forEach(doc=>{
-let d=doc.data();
-let late=d.time<nowTW().getTime();
-div.innerHTML+=`
-<div class="card">
-<b>${d.ch}</b> ${fmt(new Date(d.time))}
-${late?'<span class="late"> 遲</span>':''}
-<button class="kill" onclick="killBoss('${doc.id}','${d.ch}')">擊殺</button>
-</div>`;
-});
-});
-
-function killBoss(id,ch){
-db.collection("bosses").doc(id).delete();
-
-let today=new Date().toISOString().slice(0,10);
-let ref=db.collection("stats").doc(today);
-
-ref.get().then(doc=>{
-if(doc.exists){
-let data=doc.data();
-data.total=(data.total||0)+1;
-data[ch]=(data[ch]||0)+1;
-ref.set(data);
-}else{
-let data={total:1};
-data[ch]=1;
-ref.set(data);
-}
-});
-}
-
-db.collection("stats").doc(new Date().toISOString().slice(0,10))
-.onSnapshot(doc=>{
-let div=document.getElementById("stats");
-if(!doc.exists){div.innerHTML="今日 0 次";return;}
-let d=doc.data();
-let html="總擊殺："+d.total+"<br>";
-for(let k in d){
-if(k!=="total") html+=k+"："+d[k]+"<br>";
-}
-div.innerHTML=html;
-});
 </script>
 
 </body>
