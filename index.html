@@ -15,7 +15,6 @@ background:linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
 url("https://megapx-assets.dcard.tw/images/c7fe52fd-3629-450a-9bd7-6a3c81480b6a/640.jpeg");
 background-size:cover;
 background-position:center;
-background-attachment:fixed;
 color:#e8f6ff;
 padding:15px;
 max-width:900px;
@@ -26,31 +25,37 @@ margin:auto;
 display:block;
 margin:0 auto 10px auto;
 width:150px;
-filter:drop-shadow(0 0 10px rgba(0,200,255,0.8));
 }
 
 textarea{
-padding:10px;width:100%;
+width:100%;
+padding:10px;
+margin-bottom:5px;
 border-radius:8px;
 background:rgba(0,40,70,0.6);
-color:#fff;margin-bottom:5px;
+color:#fff;
 }
 
 button{
-padding:6px 10px;margin:4px;
-border:none;border-radius:8px;
-font-weight:bold;cursor:pointer;
+margin:4px;
+padding:6px 10px;
+border:none;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
 }
 
 .killBtn{background:#ff1744;color:#fff;}
 .checkBtn{background:#00bcd4;color:#001c2b;}
 .resetBtn{background:#aa2222;color:#fff;}
 .leaderBtn{background:#444;color:#fff;}
+.copyBtn{background:#00695c;color:#fff;}
 
 .card{
-margin:8px 0;padding:12px;
-border-radius:12px;
 background:rgba(0,60,90,0.7);
+padding:12px;
+border-radius:12px;
+margin:6px 0;
 }
 
 .delBtn{
@@ -58,8 +63,8 @@ background:#ff5252;
 color:#fff;
 border-radius:50%;
 padding:3px 7px;
-margin-right:6px;
 font-size:12px;
+margin-right:6px;
 }
 
 .editBtn{
@@ -71,7 +76,13 @@ font-size:12px;
 margin-left:6px;
 }
 
-/* 擊殺等級 */
+/* 前5 */
+.rank1{background:#ff2d2d !important;}
+.rank2{background:#8e44ad !important;}
+.rank3{background:#007bff !important;}
+.rank4{background:#00c853 !important;}
+.rank5{background:#ffd600 !important;color:#000;}
+
 .level1{color:#ffd600;}
 .level2{color:#00e676;}
 .level3{color:#00b0ff;}
@@ -87,19 +98,16 @@ font-weight:bold;
 
 #stats{
 font-size:40px;
-font-weight:bold;
 text-align:center;
 margin:10px 0;
+font-weight:bold;
 }
-
-h2{text-align:center;}
-h3{margin-top:25px;}
 </style>
 </head>
 <body>
 
 <img src="IMG_0391.png" class="logo">
-<h2>檠檠BOSS團隊</h2>
+<h2 style="text-align:center;">檠檠BOSS團隊</h2>
 
 <button class="leaderBtn" onclick="enableLeader()">🔐 團長模式</button>
 
@@ -107,18 +115,21 @@ h3{margin-top:25px;}
 <div id="record"></div>
 
 <h3>⚔️ 擊殺並更新（會 +1）</h3>
-<textarea id="killInput" rows="2"></textarea>
-<button class="killBtn" onclick="handleKill()">擊殺並更新</button>
+<textarea id="killInput"></textarea>
+<button class="killBtn" onclick="handleKill()">送出</button>
 
 <h3>⏱ 確認時間（不 +1）</h3>
-<textarea id="checkInput" rows="2"></textarea>
-<button class="checkBtn" onclick="handleCheck()">確認時間</button>
+<textarea id="checkInput"></textarea>
+<button class="checkBtn" onclick="handleCheck()">送出</button>
 
 <button class="resetBtn" onclick="resetAll()">重置全部</button>
 
+<h3>📡 已確認頻道（<span id="channelCount">0</span>）</h3>
+<div id="confirmed"></div>
+
 <h3>📝 需要再確認</h3>
 <div id="needConfirm"></div>
-<button onclick="copyNeed()">一鍵複製未確認</button>
+<button class="copyBtn" onclick="copyNeed()">一鍵複製未確認</button>
 
 <h3>📅 最近三天戰報</h3>
 <div id="history"></div>
@@ -134,12 +145,12 @@ const db=firebase.firestore();
 const increment=firebase.firestore.FieldValue.increment;
 
 let isLeader=false;
+
 function enableLeader(){
 let pwd=prompt("請輸入團長密碼");
 if(pwd==="0925"){
 isLeader=true;
 alert("團長模式啟用");
-renderHistory();
 }else{
 alert("密碼錯誤");
 }
@@ -150,19 +161,28 @@ return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
 }
 function fmt(t){return t.toTimeString().slice(0,5);}
 
-async function incrementKill(){
-let now=nowTW();
-let timeStr=fmt(now);
-let doc=await db.collection("stats").doc("today").get();
+/* Enter送出 */
+["killInput","checkInput"].forEach(id=>{
+document.getElementById(id).addEventListener("keydown",function(e){
+if(e.key==="Enter" && !e.shiftKey){
+e.preventDefault();
+id==="killInput"?handleKill():handleCheck();
+}
+});
+});
 
+/* 擊殺 */
+async function incrementKill(){
+let now=fmt(nowTW());
+let doc=await db.collection("stats").doc("today").get();
 if(!doc.exists){
 await db.collection("stats").doc("today").set({
-total:1,startTime:timeStr,endTime:timeStr
+total:1,startTime:now,endTime:now
 });
 }else{
 await db.collection("stats").doc("today").update({
 total:increment(1),
-endTime:timeStr
+endTime:now
 });
 }
 }
@@ -193,71 +213,68 @@ if(addKill) incrementKill();
 function handleKill(){parseAndUpdate(killInput.value,true);killInput.value="";}
 function handleCheck(){parseAndUpdate(checkInput.value,false);checkInput.value="";}
 
+function deleteChannel(ch){
+db.collection("bosses").doc(ch).delete();
+}
+
+/* 監聽boss */
+db.collection("bosses").onSnapshot(s=>{
+let confirmedArr=[];
+let needArr=[];
+
+s.forEach(doc=>{
+let d=doc.data();
+if(d.type==="confirmed") confirmedArr.push(d);
+if(d.type==="need") needArr.push(d);
+});
+
+confirmedArr.sort((a,b)=>a.time-b.time);
+needArr.sort((a,b)=>b.time-a.time);
+
+channelCount.innerText=confirmedArr.length;
+
+confirmed.innerHTML="";
+confirmedArr.forEach((d,i)=>{
+let diff=Math.floor((d.time-nowTW().getTime())/60000);
+let cls="";
+if(i===0)cls="rank1";
+else if(i===1)cls="rank2";
+else if(i===2)cls="rank3";
+else if(i===3)cls="rank4";
+else if(i===4)cls="rank5";
+
+let text=fmt(new Date(d.time));
+if(diff<0) text+="（遲）";
+else if(diff===0) text+=" ⚔️ 重生";
+else if(diff<=5) text+="（剩 "+diff+" 分）";
+
+confirmed.innerHTML+=`
+<div class="card ${cls}">
+<button class="delBtn" onclick="deleteChannel('${d.ch}')">✕</button>
+<b>${d.ch}</b> ${text}
+</div>`;
+});
+
+needConfirm.innerHTML="";
+needArr.forEach(d=>{
+let label=d.status==="rob"?"⚠️ 被搶":"擊殺";
+needConfirm.innerHTML+=`
+<div class="card">
+<button class="delBtn" onclick="deleteChannel('${d.ch}')">✕</button>
+<b>${d.ch}</b> ${label}
+</div>`;
+});
+});
+
+/* 複製未確認 */
 function copyNeed(){
 let text="";
-document.querySelectorAll("#needConfirm .card b").forEach(el=>{
+document.querySelectorAll("#needConfirm b").forEach(el=>{
 text+=el.innerText+" ";
 });
 navigator.clipboard.writeText(text);
 alert("已複製");
 }
-
-/* ===== 歷史 ===== */
-function renderHistory(){
-db.collection("historyDays")
-.orderBy(firebase.firestore.FieldPath.documentId(),"desc")
-.limit(3)
-.onSnapshot(snapshot=>{
-history.innerHTML="";
-let maxKill=0;
-let maxDate="-";
-
-snapshot.forEach(doc=>{
-let d=doc.data();
-if(d.total>maxKill){maxKill=d.total;maxDate=doc.id;}
-
-let delBtn=isLeader?
-`<button class="delBtn" onclick="deleteHistory('${doc.id}')">✕</button>`:"";
-
-let editBtn=isLeader?
-`<button class="editBtn" onclick="editHistory('${doc.id}',${d.total},'${d.startTime}','${d.endTime}')">編輯</button>`:"";
-
-history.innerHTML+=`
-<div class="card">
-${delBtn}
-<b>${doc.id}</b><br>
-🔥 ${d.total} 隻<br>
-🕒 ${d.startTime} ～ ${d.endTime}
-${editBtn}
-</div>`;
-});
-
-if(maxKill>0){
-record.innerHTML="🏆 最高單日："+maxKill+" 隻（"+maxDate+"）";
-}
-});
-}
-
-function deleteHistory(id){
-if(!isLeader) return;
-if(!confirm("確定刪除？")) return;
-db.collection("historyDays").doc(id).delete();
-}
-
-function editHistory(id,total,start,end){
-if(!isLeader) return;
-let newTotal=prompt("擊殺數",total);
-let newStart=prompt("開始時間 HH:MM",start);
-let newEnd=prompt("結束時間 HH:MM",end);
-
-db.collection("historyDays").doc(id).update({
-total:parseInt(newTotal),
-startTime:newStart,
-endTime:newEnd
-});
-}
-
-renderHistory();
 </script>
 </body>
 </html>
