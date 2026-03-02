@@ -26,13 +26,13 @@ min-height:100vh;
 
 .logoWrap{text-align:center;margin-bottom:10px;}
 .logo{width:140px;filter: drop-shadow(0 0 10px rgba(0,200,255,0.7));}
-
 h2{text-align:center;color:#7fdfff;}
 
 textarea{
 padding:10px;width:100%;
 border-radius:8px;border:1px solid rgba(255,255,255,0.2);
 background:rgba(0,40,70,0.6);color:#e8f6ff;
+margin-bottom:5px;
 }
 
 button{
@@ -40,10 +40,10 @@ padding:6px 10px;margin:4px;border:none;
 border-radius:8px;cursor:pointer;font-weight:bold;
 }
 
-.add{background:#00bcd4;color:#001c2b;}
-.copy{background:#045d75;color:#fff;}
-.reset{background:#aa2222;color:#fff;}
-.copyNeed{background:#6c5ce7;color:#fff;}
+.killBtn{background:#ff1744;color:#fff;}
+.checkBtn{background:#00bcd4;color:#001c2b;}
+.copyBtn{background:#045d75;color:#fff;}
+.resetBtn{background:#aa2222;color:#fff;}
 
 .actionBtn{
 margin-left:6px;
@@ -57,12 +57,21 @@ border:none;
 .btnKill{background:#00e676;color:#003300;}
 .btnRob{background:#ff1744;color:#fff;}
 
+.delBtn{
+background:#ff5252;
+color:#fff;
+margin-right:8px;
+padding:3px 7px;
+border-radius:50%;
+font-size:12px;
+cursor:pointer;
+}
+
 .card{
 margin:8px 0;padding:12px;border-radius:12px;
 background:rgba(0,60,90,0.7);
 }
 
-/* 排名前5顏色 */
 .rank1{background:#ff2d2d !important;color:#fff;font-weight:bold;}
 .rank2{background:#8e44ad !important;color:#fff;font-weight:bold;}
 .rank3{background:#007bff !important;color:#fff;font-weight:bold;}
@@ -71,7 +80,6 @@ background:rgba(0,60,90,0.7);
 
 .robbed{color:#ff4d4d;font-weight:bold;}
 
-/* ===== 擊殺顯示 ===== */
 #stats{
 font-size:42px;
 font-weight:bold;
@@ -89,14 +97,8 @@ opacity:0;
 transition:0.5s;
 }
 
-.milestoneShow{
-opacity:1;
-transform:scale(1.1);
-}
-
-.flash{
-animation:flashAnim 0.6s ease;
-}
+.milestoneShow{opacity:1;transform:scale(1.1);}
+.flash{animation:flashAnim 0.6s ease;}
 
 @keyframes flashAnim{
 0%{transform:scale(1);}
@@ -110,10 +112,10 @@ animation:flashAnim 0.6s ease;
 .level4{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
 .level5{color:#ff1744;text-shadow:0 0 15px #ff1744;}
 .level6{
-background:linear-gradient(45deg,#ff0000,#ff9900,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff);
+background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-font-weight:900;
+font-weight:bold;
 }
 
 h3{margin-top:25px;color:#7fdfff;}
@@ -122,23 +124,25 @@ h3{margin-top:25px;color:#7fdfff;}
 <body>
 
 <div class="logoWrap">
-  <img src="./IMG_0391.png?v=1" class="logo">
-  <h2>檠檠BOSS團隊</h2>
+<img src="./IMG_0391.png?v=1" class="logo">
+<h2>檠檠BOSS團隊</h2>
 </div>
 
 <div id="clock"></div>
 <div id="stats"></div>
 <div id="milestone"></div>
 
-<textarea id="input" rows="3"
-placeholder="761 53 762 0617 763 K 764 R"
-onkeydown="handleKey(event)">
-</textarea>
+<h3>⚔️ 擊殺並更新（會 +1）</h3>
+<textarea id="killInput" rows="2"></textarea>
+<button class="killBtn" onclick="handleKill()">擊殺並更新</button>
 
-<br>
-<button class="add" onclick="handleInput()">新增</button>
-<button class="copy" onclick="copyConfirmed()">複製已確認</button>
-<button class="reset" onclick="resetAll()">重置全部</button>
+<h3>⏱ 確認時間（不 +1）</h3>
+<textarea id="checkInput" rows="2"></textarea>
+<button class="checkBtn" onclick="handleCheck()">確認時間</button>
+
+<button class="copyBtn" onclick="copyConfirmed()">複製已確認</button>
+<button class="copyBtn" onclick="copyNeed()">複製未確認</button>
+<button class="resetBtn" onclick="resetAll()">重置全部</button>
 
 <h3>📡 目前頻道數（已確認）</h3>
 <div id="channelCount"></div>
@@ -147,7 +151,6 @@ onkeydown="handleKey(event)">
 <div id="confirmed"></div>
 
 <h3>📝 需要再確認</h3>
-<button class="copyNeed" onclick="copyNeed()">複製需要再確認</button>
 <div id="needConfirm"></div>
 
 <script>
@@ -165,45 +168,48 @@ return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
 }
 function fmt(t){return t.toTimeString().slice(0,5);}
 
-function handleKey(e){
-if(e.key==="Enter" && e.shiftKey)return;
-if(e.key==="Enter"){e.preventDefault();handleInput();}
+["killInput","checkInput"].forEach(id=>{
+document.getElementById(id).addEventListener("keydown",e=>{
+if(e.key==="Enter" && !e.shiftKey){
+e.preventDefault();
+if(id==="killInput") handleKill();
+else handleCheck();
 }
-
-function markKill(ch){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"kill",created:Date.now()
 });
-incrementKill();
-}
-
-function markRob(ch){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"robbed",created:Date.now()
 });
-}
 
-function handleInput(){
-let raw=input.value.trim();
-if(!raw)return;
-let tokens=raw.split(/\s+/);
+setInterval(()=>{
+clock.innerText="台灣時間 "+fmt(nowTW());
+},1000);
+
+function parseAndUpdate(raw, addKill){
+let tokens=raw.trim().split(/\s+/);
 
 for(let i=0;i<tokens.length;i+=2){
 let ch=tokens[i];
 let arg=tokens[i+1];
-if(!ch||!arg)continue;
+if(!ch||!arg) continue;
 
-if(arg==="X"){deleteChannel(ch);continue;}
+if(arg==="K"){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"kill",time:nowTW().getTime()
+});
+continue;
+}
 
-if(arg==="K"){markKill(ch);continue;}
-if(arg==="R"){markRob(ch);continue;}
+if(arg==="R"){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"rob",time:nowTW().getTime()
+});
+continue;
+}
 
-let time=null;
+let time;
 if(arg.length===4){
 let h=parseInt(arg.slice(0,2));
 let m=parseInt(arg.slice(2));
 let d=nowTW();
-d.setHours(h);d.setMinutes(m);
+d.setHours(h); d.setMinutes(m);
 time=d.getTime();
 }else{
 let mins=parseInt(arg);
@@ -213,48 +219,34 @@ time=nowTW().getTime()+mins*60000;
 db.collection("bosses").doc(ch).set({
 ch,type:"confirmed",time
 });
-incrementKill();
-}
-input.value="";
-}
 
-function incrementKill(){
+if(addKill){
 db.collection("stats").doc("today").set({
 total: increment(1)
 },{merge:true});
 }
+}
+}
+
+function handleKill(){parseAndUpdate(killInput.value,true);killInput.value="";}
+function handleCheck(){parseAndUpdate(checkInput.value,false);checkInput.value="";}
 
 function deleteChannel(ch){
+if(!confirm("確定移除頻道 "+ch+" ?")) return;
 db.collection("bosses").doc(ch).delete();
 }
 
-function resetAll(){
-if(!confirm("確定清空全部資料？"))return;
-db.collection("bosses").get().then(s=>{s.forEach(d=>d.ref.delete())});
-db.collection("stats").doc("today").delete();
-}
-
-function copyConfirmed(){
-let text="【已確認】\n\n";
-document.querySelectorAll("#confirmed .card").forEach(c=>{
-text+=c.innerText+"\n";
+function markKill(ch){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"kill",time:nowTW().getTime()
 });
-navigator.clipboard.writeText(text);
-alert("已複製");
 }
 
-function copyNeed(){
-let text="【需要再確認】\n\n";
-document.querySelectorAll("#needConfirm .card").forEach(c=>{
-text+=c.innerText+"\n";
+function markRob(ch){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"rob",time:nowTW().getTime()
 });
-navigator.clipboard.writeText(text);
-alert("已複製");
 }
-
-setInterval(()=>{
-clock.innerText="台灣時間 "+fmt(nowTW());
-},1000);
 
 db.collection("bosses").onSnapshot(s=>{
 let confirmedArr=[];
@@ -264,12 +256,10 @@ s.forEach(doc=>{
 let d=doc.data();
 if(d.type==="confirmed") confirmedArr.push(d);
 if(d.type==="need") needArr.push(d);
-if(d.type==="unconfirmed"){d.status="kill";needArr.push(d);}
-if(d.type==="robbed"){d.status="robbed";needArr.push(d);}
 });
 
 confirmedArr.sort((a,b)=>a.time-b.time);
-needArr.sort((a,b)=>b.created-a.created);
+needArr.sort((a,b)=>b.time-a.time);
 
 channelCount.innerHTML="目前 "+confirmedArr.length+" 個頻道";
 
@@ -288,71 +278,84 @@ else if(index===3) cls="rank4";
 else if(index===4) cls="rank5";
 
 let text=fmt(new Date(d.time));
-
-if(diff<0){
-text+="（遲）";
-}
-else if(diff===0){
-text+=" ⚔️ 重生";
-}
-else if(diff<=5){
-text+="（剩 "+diff+" 分）";
-}
+if(diff<0) text+="（遲）";
+else if(diff===0) text+=" ⚔️ 重生";
+else if(diff<=5) text+="（剩 "+diff+" 分）";
 
 confirmed.innerHTML+=`
 <div class="card ${cls}">
+<button class="delBtn" onclick="deleteChannel('${d.ch}')">✕</button>
 <b>${d.ch}</b> ${text}
-<button class="actionBtn btnKill" onclick="markKill('${d.ch}')">擊殺(K)</button>
-<button class="actionBtn btnRob" onclick="markRob('${d.ch}')">被搶(R)</button>
+<button class="actionBtn btnKill" onclick="markKill('${d.ch}')">🔥 擊殺</button>
+<button class="actionBtn btnRob" onclick="markRob('${d.ch}')">⚠️ 被搶</button>
 </div>`;
 });
 
 needArr.forEach(d=>{
-let label=d.status==="robbed"?"⚠️ 被搶":"擊殺";
+let label=d.status==="rob"
+? "<span class='robbed'>⚠️ 被搶</span>"
+: "🔥 擊殺";
+
 needConfirm.innerHTML+=`
-<div class="card ${d.status==="robbed"?"robbed":""}">
+<div class="card">
+<button class="delBtn" onclick="deleteChannel('${d.ch}')">✕</button>
 <b>${d.ch}</b> ${label}
 </div>`;
 });
 });
 
-/* ===== 擊殺 + 里程碑 ===== */
+function copyConfirmed(){
+let text="";
+document.querySelectorAll("#confirmed b").forEach(e=>{
+text+=e.innerText+" ";
+});
+navigator.clipboard.writeText(text.trim());
+alert("已複製已確認");
+}
+
+function copyNeed(){
+let text="";
+document.querySelectorAll("#needConfirm b").forEach(e=>{
+text+=e.innerText+" ";
+});
+navigator.clipboard.writeText(text.trim());
+alert("已複製未確認");
+}
+
 let lastMilestone=0;
+const milestones=[50,100,120,150,200,250];
 
 db.collection("stats").doc("today").onSnapshot(doc=>{
-let total=0;
-if(doc.exists) total=doc.data().total||0;
-
-let levelClass="level1";
-if(total>=500) levelClass="level6";
-else if(total>=300) levelClass="level5";
-else if(total>=200) levelClass="level4";
-else if(total>=100) levelClass="level3";
-else if(total>=50) levelClass="level2";
-
-stats.classList.remove("level1","level2","level3","level4","level5","level6","flash");
-stats.classList.add(levelClass);
+let total=doc.exists?(doc.data().total||0):0;
 
 stats.innerHTML="🔥 今日擊殺："+total+" ❗";
-
+stats.className="";
 stats.classList.add("flash");
-setTimeout(()=>{stats.classList.remove("flash");},600);
 
-let milestones=[50,100,200,300,500];
+if(total>=250) stats.classList.add("level6");
+else if(total>=200) stats.classList.add("level5");
+else if(total>=150) stats.classList.add("level4");
+else if(total>=120) stats.classList.add("level3");
+else if(total>=100) stats.classList.add("level2");
+else if(total>=50) stats.classList.add("level1");
+
+setTimeout(()=>stats.classList.remove("flash"),600);
+
 for(let m of milestones){
 if(total===m && lastMilestone!==m){
 lastMilestone=m;
-showMilestone(m);
+milestone.innerHTML="🎉 "+m+" 達成！";
+milestone.classList.add("milestoneShow");
+setTimeout(()=>milestone.classList.remove("milestoneShow"),3000);
 }
 }
 });
 
-function showMilestone(num){
-milestone.innerHTML="🎉 "+num+" 達成！";
-milestone.classList.add("milestoneShow");
-setTimeout(()=>{
-milestone.classList.remove("milestoneShow");
-},3000);
+async function resetAll(){
+if(!confirm("確定重置全部?")) return;
+let bosses=await db.collection("bosses").get();
+bosses.forEach(doc=>doc.ref.delete());
+await db.collection("stats").doc("today").delete();
 }
 </script>
 </body>
