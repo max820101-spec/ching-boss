@@ -106,7 +106,6 @@ transition:0.5s;
 100%{transform:scale(1);}
 }
 
-/* 今日擊殺顏色 */
 .level1{color:#ffd600;text-shadow:0 0 10px #ffd600;}
 .level2{color:#00e676;text-shadow:0 0 12px #00e676;}
 .level3{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
@@ -119,7 +118,6 @@ background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
 font-weight:bold;
 }
 
-/* 里程碑顏色 */
 .m50{color:#ffd600;text-shadow:0 0 10px #ffd600;}
 .m100{color:#00e676;text-shadow:0 0 12px #00e676;}
 .m120{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
@@ -175,7 +173,6 @@ projectId:"ching-fishboss-kill"
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-const increment = firebase.firestore.FieldValue.increment;
 
 function nowTW(){
 return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
@@ -196,13 +193,29 @@ setInterval(()=>{
 clock.innerText="台灣時間 "+fmt(nowTW());
 },1000);
 
-function addKillCount(){
-db.collection("stats").doc("today").set({
-total: increment(1)
-},{merge:true});
+async function addKillCount(){
+const ref=db.collection("stats").doc("today");
+const doc=await ref.get();
+if(!doc.exists){
+await ref.set({total:1});
+}else{
+await ref.update({
+total:firebase.firestore.FieldValue.increment(1)
+});
+}
 }
 
-function parseAndUpdate(raw, addKill){
+function handleKill(){
+parseInput(killInput.value,true);
+killInput.value="";
+}
+
+function handleCheck(){
+parseInput(checkInput.value,false);
+checkInput.value="";
+}
+
+function parseInput(raw,addKill){
 let tokens=raw.trim().split(/\s+/);
 for(let i=0;i<tokens.length;i+=2){
 let ch=tokens[i];
@@ -229,11 +242,10 @@ if(arg.length===4){
 let h=parseInt(arg.slice(0,2));
 let m=parseInt(arg.slice(2));
 let d=nowTW();
-d.setHours(h); d.setMinutes(m);
+d.setHours(h);d.setMinutes(m);
 time=d.getTime();
 }else{
-let mins=parseInt(arg);
-time=nowTW().getTime()+mins*60000;
+time=nowTW().getTime()+parseInt(arg)*60000;
 }
 
 db.collection("bosses").doc(ch).set({
@@ -243,9 +255,6 @@ ch,type:"confirmed",time
 if(addKill) addKillCount();
 }
 }
-
-function handleKill(){parseAndUpdate(killInput.value,true);killInput.value="";}
-function handleCheck(){parseAndUpdate(checkInput.value,false);checkInput.value="";}
 
 function deleteChannel(ch){
 if(!confirm("確定移除頻道 "+ch+" ?")) return;
@@ -267,25 +276,20 @@ ch,type:"need",status:"rob",time:nowTW().getTime()
 
 function copyConfirmed(){
 let text="";
-document.querySelectorAll("#confirmed b").forEach(e=>{
-text+=e.innerText+" ";
-});
+document.querySelectorAll("#confirmed b").forEach(e=>text+=e.innerText+" ");
 navigator.clipboard.writeText(text.trim());
 alert("已複製已確認");
 }
 
 function copyNeed(){
 let text="";
-document.querySelectorAll("#needConfirm b").forEach(e=>{
-text+=e.innerText+" ";
-});
+document.querySelectorAll("#needConfirm b").forEach(e=>text+=e.innerText+" ");
 navigator.clipboard.writeText(text.trim());
 alert("已複製未確認");
 }
 
 db.collection("bosses").onSnapshot(s=>{
-let confirmedArr=[];
-let needArr=[];
+let confirmedArr=[],needArr=[];
 s.forEach(doc=>{
 let d=doc.data();
 if(d.type==="confirmed") confirmedArr.push(d);
@@ -300,8 +304,7 @@ confirmed.innerHTML="";
 needConfirm.innerHTML="";
 
 confirmedArr.forEach((d,index)=>{
-let now=nowTW().getTime();
-let diff=Math.floor((d.time-now)/60000);
+let diff=Math.floor((d.time-nowTW().getTime())/60000);
 let cls="";
 if(index===0) cls="rank1";
 else if(index===1) cls="rank2";
@@ -324,10 +327,7 @@ confirmed.innerHTML+=`
 });
 
 needArr.forEach(d=>{
-let label=d.status==="rob"
-? "<span class='robbed'>⚠️ 被搶</span>"
-: "🔥 擊殺";
-
+let label=d.status==="rob"?"<span class='robbed'>⚠️ 被搶</span>":"🔥 擊殺";
 needConfirm.innerHTML+=`
 <div class="card">
 <button class="delBtn" onclick="deleteChannel('${d.ch}')">✕</button>
@@ -357,7 +357,6 @@ else if(total>=50) stats.classList.add("level1");
 for(let m of milestones){
 if(total===m && lastMilestone!==m){
 lastMilestone=m;
-
 milestone.className="";
 milestone.classList.add("milestoneShow");
 
@@ -371,7 +370,6 @@ else if(m>=250) colorClass="m250";
 
 milestone.classList.add(colorClass);
 milestone.innerHTML="🎉 "+m+" 達成！";
-
 setTimeout(()=>milestone.classList.remove("milestoneShow"),3000);
 }
 }
