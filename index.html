@@ -106,12 +106,26 @@ transition:0.5s;
 100%{transform:scale(1);}
 }
 
+/* 今日擊殺顏色 */
 .level1{color:#ffd600;text-shadow:0 0 10px #ffd600;}
 .level2{color:#00e676;text-shadow:0 0 12px #00e676;}
 .level3{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
 .level4{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
 .level5{color:#ff1744;text-shadow:0 0 15px #ff1744;}
 .level6{
+background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:bold;
+}
+
+/* 里程碑顏色 */
+.m50{color:#ffd600;text-shadow:0 0 10px #ffd600;}
+.m100{color:#00e676;text-shadow:0 0 12px #00e676;}
+.m120{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
+.m150{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
+.m200{color:#ff1744;text-shadow:0 0 15px #ff1744;}
+.m250{
 background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
@@ -182,9 +196,14 @@ setInterval(()=>{
 clock.innerText="台灣時間 "+fmt(nowTW());
 },1000);
 
+function addKillCount(){
+db.collection("stats").doc("today").set({
+total: increment(1)
+},{merge:true});
+}
+
 function parseAndUpdate(raw, addKill){
 let tokens=raw.trim().split(/\s+/);
-
 for(let i=0;i<tokens.length;i+=2){
 let ch=tokens[i];
 let arg=tokens[i+1];
@@ -194,6 +213,7 @@ if(arg==="K"){
 db.collection("bosses").doc(ch).set({
 ch,type:"need",status:"kill",time:nowTW().getTime()
 });
+addKillCount();
 continue;
 }
 
@@ -220,11 +240,7 @@ db.collection("bosses").doc(ch).set({
 ch,type:"confirmed",time
 });
 
-if(addKill){
-db.collection("stats").doc("today").set({
-total: increment(1)
-},{merge:true});
-}
+if(addKill) addKillCount();
 }
 }
 
@@ -240,6 +256,7 @@ function markKill(ch){
 db.collection("bosses").doc(ch).set({
 ch,type:"need",status:"kill",time:nowTW().getTime()
 });
+addKillCount();
 }
 
 function markRob(ch){
@@ -248,10 +265,27 @@ ch,type:"need",status:"rob",time:nowTW().getTime()
 });
 }
 
+function copyConfirmed(){
+let text="";
+document.querySelectorAll("#confirmed b").forEach(e=>{
+text+=e.innerText+" ";
+});
+navigator.clipboard.writeText(text.trim());
+alert("已複製已確認");
+}
+
+function copyNeed(){
+let text="";
+document.querySelectorAll("#needConfirm b").forEach(e=>{
+text+=e.innerText+" ";
+});
+navigator.clipboard.writeText(text.trim());
+alert("已複製未確認");
+}
+
 db.collection("bosses").onSnapshot(s=>{
 let confirmedArr=[];
 let needArr=[];
-
 s.forEach(doc=>{
 let d=doc.data();
 if(d.type==="confirmed") confirmedArr.push(d);
@@ -262,14 +296,12 @@ confirmedArr.sort((a,b)=>a.time-b.time);
 needArr.sort((a,b)=>b.time-a.time);
 
 channelCount.innerHTML="目前 "+confirmedArr.length+" 個頻道";
-
 confirmed.innerHTML="";
 needConfirm.innerHTML="";
 
 confirmedArr.forEach((d,index)=>{
 let now=nowTW().getTime();
 let diff=Math.floor((d.time-now)/60000);
-
 let cls="";
 if(index===0) cls="rank1";
 else if(index===1) cls="rank2";
@@ -304,24 +336,6 @@ needConfirm.innerHTML+=`
 });
 });
 
-function copyConfirmed(){
-let text="";
-document.querySelectorAll("#confirmed b").forEach(e=>{
-text+=e.innerText+" ";
-});
-navigator.clipboard.writeText(text.trim());
-alert("已複製已確認");
-}
-
-function copyNeed(){
-let text="";
-document.querySelectorAll("#needConfirm b").forEach(e=>{
-text+=e.innerText+" ";
-});
-navigator.clipboard.writeText(text.trim());
-alert("已複製未確認");
-}
-
 let lastMilestone=0;
 const milestones=[50,100,120,150,200,250];
 
@@ -329,8 +343,9 @@ db.collection("stats").doc("today").onSnapshot(doc=>{
 let total=doc.exists?(doc.data().total||0):0;
 
 stats.innerHTML="🔥 今日擊殺："+total+" ❗";
-stats.className="";
+stats.classList.remove("level1","level2","level3","level4","level5","level6");
 stats.classList.add("flash");
+setTimeout(()=>stats.classList.remove("flash"),600);
 
 if(total>=250) stats.classList.add("level6");
 else if(total>=200) stats.classList.add("level5");
@@ -339,13 +354,24 @@ else if(total>=120) stats.classList.add("level3");
 else if(total>=100) stats.classList.add("level2");
 else if(total>=50) stats.classList.add("level1");
 
-setTimeout(()=>stats.classList.remove("flash"),600);
-
 for(let m of milestones){
 if(total===m && lastMilestone!==m){
 lastMilestone=m;
-milestone.innerHTML="🎉 "+m+" 達成！";
+
+milestone.className="";
 milestone.classList.add("milestoneShow");
+
+let colorClass="";
+if(m===50) colorClass="m50";
+else if(m===100) colorClass="m100";
+else if(m===120) colorClass="m120";
+else if(m===150) colorClass="m150";
+else if(m===200) colorClass="m200";
+else if(m>=250) colorClass="m250";
+
+milestone.classList.add(colorClass);
+milestone.innerHTML="🎉 "+m+" 達成！";
+
 setTimeout(()=>milestone.classList.remove("milestoneShow"),3000);
 }
 }
