@@ -11,141 +11,144 @@
 <style>
 body{
 font-family:Arial;
-background:#061b2b;
+background:
+linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)),
+url("https://megapx-assets.dcard.tw/images/c7fe52fd-3629-450a-9bd7-6a3c81480b6a/640.jpeg");
+background-size:cover;
+background-position:center;
+background-attachment:fixed;
 color:#e8f6ff;
 padding:15px;
-max-width:1000px;
+max-width:900px;
 margin:auto;
+min-height:100vh;
 }
 
-h2{text-align:center;}
+.logoWrap{text-align:center;margin-bottom:10px;}
+.logo{width:140px;filter: drop-shadow(0 0 10px rgba(0,200,255,0.7));}
+
+h2{text-align:center;color:#7fdfff;}
 
 textarea{
-width:100%;
-padding:8px;
-border-radius:6px;
-margin:5px 0;
+padding:10px;width:100%;
+border-radius:8px;border:1px solid rgba(255,255,255,0.2);
+background:rgba(0,40,70,0.6);color:#e8f6ff;
 }
 
 button{
-margin:4px;
-padding:6px 10px;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
+padding:6px 10px;margin:4px;border:none;
+border-radius:8px;cursor:pointer;font-weight:bold;
 }
 
-.killBtn{background:#ff1744;color:white;}
-.checkBtn{background:#00bcd4;color:black;}
-.resetBtn{background:#aa2222;color:white;}
-.modeBtn{background:#444;color:white;}
-.copyBtn{background:#00695c;color:white;}
+.add{background:#00bcd4;color:#001c2b;}
+.copy{background:#045d75;color:#fff;}
+.reset{background:#aa2222;color:#fff;}
+.copyNeed{background:#6c5ce7;color:#fff;}
+
+.actionBtn{
+margin-left:6px;
+padding:4px 8px;
+font-size:12px;
+border-radius:6px;
+cursor:pointer;
+border:none;
+}
+
+.btnKill{background:#00e676;color:#003300;}
+.btnRob{background:#ff1744;color:#fff;}
 
 .card{
-background:#0c2a3d;
-padding:10px;
-border-radius:8px;
-margin:6px 0;
+margin:8px 0;padding:12px;border-radius:12px;
+background:rgba(0,60,90,0.7);
 }
 
-.rank1{background:#ff2d2d;}
-.rank2{background:#8e44ad;}
-.rank3{background:#007bff;}
-.rank4{background:#00c853;}
-.rank5{background:#ffd600;color:black;}
+/* 排名前5顏色 */
+.rank1{background:#ff2d2d !important;color:#fff;font-weight:bold;}
+.rank2{background:#8e44ad !important;color:#fff;font-weight:bold;}
+.rank3{background:#007bff !important;color:#fff;font-weight:bold;}
+.rank4{background:#00c853 !important;color:#fff;font-weight:bold;}
+.rank5{background:#ffd600 !important;color:#000;font-weight:bold;}
 
-.delBtn{
-background:#ff5252;
-color:white;
-border-radius:50%;
-padding:2px 6px;
-font-size:12px;
-margin-right:6px;
-}
+.robbed{color:#ff4d4d;font-weight:bold;}
 
-.editBtn{
-background:#ffaa00;
-color:black;
-border-radius:4px;
-padding:2px 6px;
-font-size:12px;
-margin-left:6px;
-}
-
+/* ===== 擊殺顯示 ===== */
 #stats{
-font-size:46px;
-text-align:center;
+font-size:42px;
 font-weight:bold;
-margin:10px 0;
+margin:10px 0 5px 0;
+text-align:center;
 transition:0.3s;
 }
 
-.flash{
-animation:pop 0.4s;
+#milestone{
+text-align:center;
+font-size:22px;
+font-weight:bold;
+margin-bottom:10px;
+opacity:0;
+transition:0.5s;
 }
 
-@keyframes pop{
+.milestoneShow{
+opacity:1;
+transform:scale(1.1);
+}
+
+.flash{
+animation:flashAnim 0.6s ease;
+}
+
+@keyframes flashAnim{
 0%{transform:scale(1);}
-50%{transform:scale(1.2);}
+50%{transform:scale(1.25);}
 100%{transform:scale(1);}
 }
 
-.level1{color:#ffd600;}
-.level2{color:#00e676;}
-.level3{color:#00b0ff;}
-.level4{color:#aa00ff;}
-.level5{color:#ff9800;}
-.level6{color:#ff1744;}
-.level7{
-background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
+.level1{color:#ffd600;text-shadow:0 0 10px #ffd600;}
+.level2{color:#00e676;text-shadow:0 0 12px #00e676;}
+.level3{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
+.level4{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
+.level5{color:#ff1744;text-shadow:0 0 15px #ff1744;}
+.level6{
+background:linear-gradient(45deg,#ff0000,#ff9900,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-font-weight:bold;
+font-weight:900;
 }
 
-.creator{
-text-align:center;
-margin-top:40px;
-font-size:16px;
-color:#00e5ff;
-text-shadow:
-0 0 5px #00e5ff,
-0 0 15px #00bcd4,
-0 0 30px #00e5ff;
-}
+h3{margin-top:25px;color:#7fdfff;}
 </style>
 </head>
 <body>
 
-<h2>檠檠BOSS團隊</h2>
+<div class="logoWrap">
+  <img src="./IMG_0391.png?v=1" class="logo">
+  <h2>檠檠BOSS團隊</h2>
+</div>
 
-<button class="modeBtn" onclick="toggleCreator()">🔐 製作者模式</button>
-
+<div id="clock"></div>
 <div id="stats"></div>
-<div id="record"></div>
+<div id="milestone"></div>
 
-<h3>⚔️ 擊殺並更新（會 +1）</h3>
-<textarea id="killInput"></textarea>
-<button class="killBtn" onclick="handleKill()">送出</button>
+<textarea id="input" rows="3"
+placeholder="761 53 762 0617 763 K 764 R"
+onkeydown="handleKey(event)">
+</textarea>
 
-<h3>⏱ 確認時間（不 +1）</h3>
-<textarea id="checkInput"></textarea>
-<button class="checkBtn" onclick="handleCheck()">送出</button>
+<br>
+<button class="add" onclick="handleInput()">新增</button>
+<button class="copy" onclick="copyConfirmed()">複製已確認</button>
+<button class="reset" onclick="resetAll()">重置全部</button>
 
-<button class="resetBtn" onclick="resetAll()">全部重置</button>
+<h3>📡 目前頻道數（已確認）</h3>
+<div id="channelCount"></div>
 
-<h3>📡 已確認頻道（<span id="count">0</span>）</h3>
+<h3>✅ 已確認</h3>
 <div id="confirmed"></div>
-<button class="copyBtn" onclick="copyConfirmed()">一鍵複製已確認</button>
+
 <h3>📝 需要再確認</h3>
-<div id="need"></div>
-<button class="copyBtn" onclick="copyNeed()">一鍵複製未確認</button>
-
-<h3>📅 最近三天戰報</h3>
-<div id="history"></div>
-
-<div class="creator">作者: Ching檠</div>
+<button class="copyNeed" onclick="copyNeed()">複製需要再確認</button>
+<div id="needConfirm"></div>
 
 <script>
 const firebaseConfig={
@@ -153,284 +156,204 @@ apiKey:"AIzaSyARK9NLOTdrqwkDX3dr9isdwEVGCih5Uno",
 authDomain:"ching-fishboss-kill.firebaseapp.com",
 projectId:"ching-fishboss-kill"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-const inc=firebase.firestore.FieldValue.increment;
-const confirmedDiv = document.getElementById("confirmed");
-const needDiv = document.getElementById("need");
-const countSpan = document.getElementById("count");
-let isCreator=false;
-
-function toggleCreator(){
-let pwd=prompt("輸入製作者密碼");
-if(pwd==="0925"){
-isCreator=true;
-alert("製作者模式開啟");
-}else{
-alert("密碼錯誤");
-}
-}
+const increment = firebase.firestore.FieldValue.increment;
 
 function nowTW(){
 return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
 }
+function fmt(t){return t.toTimeString().slice(0,5);}
 
-function fmt(t){
-return t.toTimeString().slice(0,5);
+function handleKey(e){
+if(e.key==="Enter" && e.shiftKey)return;
+if(e.key==="Enter"){e.preventDefault();handleInput();}
 }
 
-/* Enter送出 */
-["killInput","checkInput"].forEach(id=>{
-document.getElementById(id).addEventListener("keydown",e=>{
-if(e.key==="Enter"&&!e.shiftKey){
-e.preventDefault();
-id==="killInput"?handleKill():handleCheck();
-}
+function markKill(ch){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"kill",created:Date.now()
 });
-});
-
-/* 擊殺統計 */
-async function addKill(){
-let now=fmt(nowTW());
-let ref=db.collection("stats").doc("today");
-let doc=await ref.get();
-if(!doc.exists){
-await ref.set({total:1,start:now,end:now});
-}else{
-await ref.update({total:inc(1),end:now});
-}
+incrementKill();
 }
 
-db.collection("stats").doc("today").onSnapshot(doc=>{
-let total=doc.exists?doc.data().total:0;
-
-let level="level1";
-if(total>=250)level="level7";
-else if(total>=200)level="level6";
-else if(total>=150)level="level5";
-else if(total>=120)level="level4";
-else if(total>=100)level="level3";
-else if(total>=50)level="level2";
-
-stats.className=level+" flash";
-stats.innerHTML="🔥 今日擊殺："+total+" ❗";
-
-setTimeout(()=>stats.classList.remove("flash"),300);
+function markRob(ch){
+db.collection("bosses").doc(ch).set({
+ch,type:"need",status:"robbed",created:Date.now()
 });
+}
 
-/* 解析輸入 */
-function parseInput(raw,add){
-let arr=raw.trim().split(/\s+/);
+function handleInput(){
+let raw=input.value.trim();
+if(!raw)return;
+let tokens=raw.split(/\s+/);
 
-for(let i=0;i<arr.length;i+=2){
-let ch=arr[i];
-let arg=arr[i+1];
+for(let i=0;i<tokens.length;i+=2){
+let ch=tokens[i];
+let arg=tokens[i+1];
 if(!ch||!arg)continue;
 
-if(arg==="K"){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"kill",time:nowTW().getTime()
-});
-continue;
-}
+if(arg==="X"){deleteChannel(ch);continue;}
 
-if(arg==="R"){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"rob",time:nowTW().getTime()
-});
-continue;
-}
+if(arg==="K"){markKill(ch);continue;}
+if(arg==="R"){markRob(ch);continue;}
 
-let time;
+let time=null;
 if(arg.length===4){
+let h=parseInt(arg.slice(0,2));
+let m=parseInt(arg.slice(2));
 let d=nowTW();
-d.setHours(parseInt(arg.slice(0,2)));
-d.setMinutes(parseInt(arg.slice(2)));
+d.setHours(h);d.setMinutes(m);
 time=d.getTime();
 }else{
-time=nowTW().getTime()+parseInt(arg)*60000;
+let mins=parseInt(arg);
+time=nowTW().getTime()+mins*60000;
 }
 
 db.collection("bosses").doc(ch).set({
 ch,type:"confirmed",time
 });
-
-if(add) addKill();
+incrementKill();
 }
-}
-
-function handleKill(){
-parseInput(killInput.value,true);
-killInput.value="";
+input.value="";
 }
 
-function handleCheck(){
-parseInput(checkInput.value,false);
-checkInput.value="";
+function incrementKill(){
+db.collection("stats").doc("today").set({
+total: increment(1)
+},{merge:true});
 }
 
-function deleteCh(ch){
+function deleteChannel(ch){
 db.collection("bosses").doc(ch).delete();
 }
 
-/* 監聽boss */
+function resetAll(){
+if(!confirm("確定清空全部資料？"))return;
+db.collection("bosses").get().then(s=>{s.forEach(d=>d.ref.delete())});
+db.collection("stats").doc("today").delete();
+}
+
+function copyConfirmed(){
+let text="【已確認】\n\n";
+document.querySelectorAll("#confirmed .card").forEach(c=>{
+text+=c.innerText+"\n";
+});
+navigator.clipboard.writeText(text);
+alert("已複製");
+}
+
+function copyNeed(){
+let text="【需要再確認】\n\n";
+document.querySelectorAll("#needConfirm .card").forEach(c=>{
+text+=c.innerText+"\n";
+});
+navigator.clipboard.writeText(text);
+alert("已複製");
+}
+
+setInterval(()=>{
+clock.innerText="台灣時間 "+fmt(nowTW());
+},1000);
+
 db.collection("bosses").onSnapshot(s=>{
 let confirmedArr=[];
 let needArr=[];
 
 s.forEach(doc=>{
 let d=doc.data();
-if(d.type==="confirmed")confirmedArr.push(d);
-if(d.type==="need")needArr.push(d);
+if(d.type==="confirmed") confirmedArr.push(d);
+if(d.type==="need") needArr.push(d);
+if(d.type==="unconfirmed"){d.status="kill";needArr.push(d);}
+if(d.type==="robbed"){d.status="robbed";needArr.push(d);}
 });
 
 confirmedArr.sort((a,b)=>a.time-b.time);
-needArr.sort((a,b)=>b.time-a.time);
+needArr.sort((a,b)=>b.created-a.created);
 
-countSpan.innerText=confirmedArr.length;
+channelCount.innerHTML="目前 "+confirmedArr.length+" 個頻道";
 
-confirmedDiv.innerHTML=""
-confirmedArr.forEach((d,i)=>{
-let diff=Math.floor((d.time-Date.now())/60000);
-let cls=i<5?"rank"+(i+1):"";
+confirmed.innerHTML="";
+needConfirm.innerHTML="";
 
-let txt=fmt(new Date(d.time));
+confirmedArr.forEach((d,index)=>{
+let now=nowTW().getTime();
+let diff=Math.floor((d.time-now)/60000);
 
-if(diff<0)txt+="（遲）";
-else if(diff===0)txt+=" ⚔️ 重生";
-else if(diff<=5)txt+="（剩 "+diff+" 分）";
+let cls="";
+if(index===0) cls="rank1";
+else if(index===1) cls="rank2";
+else if(index===2) cls="rank3";
+else if(index===3) cls="rank4";
+else if(index===4) cls="rank5";
+
+let text=fmt(new Date(d.time));
+
+if(diff<0){
+text+="（遲）";
+}
+else if(diff===0){
+text+=" ⚔️ 重生";
+}
+else if(diff<=5){
+text+="（剩 "+diff+" 分）";
+}
 
 confirmed.innerHTML+=`
 <div class="card ${cls}">
-<button class="delBtn" onclick="deleteCh('${d.ch}')">✕</button>
-<b>${d.ch}</b> ${txt}
-<button onclick="markK('${d.ch}')">K</button>
-<button onclick="markR('${d.ch}')">R</button>
+<b>${d.ch}</b> ${text}
+<button class="actionBtn btnKill" onclick="markKill('${d.ch}')">擊殺(K)</button>
+<button class="actionBtn btnRob" onclick="markRob('${d.ch}')">被搶(R)</button>
 </div>`;
 });
 
-needDiv.innerHTML=""
 needArr.forEach(d=>{
-let label = d.status==="rob" ? "⚠️ 被搶" : "🔥 擊殺";
-need.innerHTML+=`
-<div class="card">
-<button class="delBtn" onclick="deleteCh('${d.ch}')">✕</button>
+let label=d.status==="robbed"?"⚠️ 被搶":"擊殺";
+needConfirm.innerHTML+=`
+<div class="card ${d.status==="robbed"?"robbed":""}">
 <b>${d.ch}</b> ${label}
 </div>`;
 });
 });
 
-function markK(ch){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"kill",time:Date.now()
-});
+/* ===== 擊殺 + 里程碑 ===== */
+let lastMilestone=0;
+
+db.collection("stats").doc("today").onSnapshot(doc=>{
+let total=0;
+if(doc.exists) total=doc.data().total||0;
+
+let levelClass="level1";
+if(total>=500) levelClass="level6";
+else if(total>=300) levelClass="level5";
+else if(total>=200) levelClass="level4";
+else if(total>=100) levelClass="level3";
+else if(total>=50) levelClass="level2";
+
+stats.classList.remove("level1","level2","level3","level4","level5","level6","flash");
+stats.classList.add(levelClass);
+
+stats.innerHTML="🔥 今日擊殺："+total+" ❗";
+
+stats.classList.add("flash");
+setTimeout(()=>{stats.classList.remove("flash");},600);
+
+let milestones=[50,100,200,300,500];
+for(let m of milestones){
+if(total===m && lastMilestone!==m){
+lastMilestone=m;
+showMilestone(m);
 }
-
-function markR(ch){
-db.collection("bosses").doc(ch).set({
-ch,type:"need",status:"rob",time:Date.now()
-});
-}
-
-function copyNeed(){
-  function copyConfirmed(){
-let text="";
-document.querySelectorAll("#confirmed b").forEach(e=>{
-text+=e.innerText+" ";
-});
-navigator.clipboard.writeText(text);
-alert("已複製已確認頻道");
-}
-let text="";
-document.querySelectorAll("#need b").forEach(e=>{
-text+=e.innerText+" ";
-});
-navigator.clipboard.writeText(text);
-alert("已複製");
-}
-
-/* 重置 */
-async function resetAll(){
-if(!confirm("確定重置?"))return;
-
-let today=await db.collection("stats").doc("today").get();
-
-if(today.exists){
-let d=today.data();
-let id=new Date().toISOString().slice(0,16).replace("T","_");
-await db.collection("historyDays").doc(id).set(d);
-}
-
-let bosses=await db.collection("bosses").get();
-bosses.forEach(doc=>doc.ref.delete());
-await db.collection("stats").doc("today").delete();
-}
-
-/* 歷史 */
-db.collection("historyDays")
-.orderBy(firebase.firestore.FieldPath.documentId(),"desc")
-.limit(3)
-.onSnapshot(snapshot=>{
-history.innerHTML="";
-let max=0;
-let maxDate="-";
-
-snapshot.forEach(doc=>{
-let d=doc.data();
-if(d.total>max){max=d.total;maxDate=doc.id;}
-
-let del=isCreator?`<button class="delBtn" onclick="deleteHistory('${doc.id}')">✕</button>`:"";
-let edit=isCreator?`<button class="editBtn" onclick="editHistory('${doc.id}',${d.total},'${d.start}','${d.end}')">編輯</button>`:"";
-
-let duration="-";
-let avg="-";
-
-if(d.start&&d.end){
-let [sh,sm]=d.start.split(":").map(Number);
-let [eh,em]=d.end.split(":").map(Number);
-let diff=(eh*60+em)-(sh*60+sm);
-if(diff<0)diff+=1440;
-let h=Math.floor(diff/60);
-let m=diff%60;let label=d.status==="rob"?"⚠️ 被搶":"擊殺";
-duration=h+"小時"+m+"分";
-avg=(diff>0)?(d.total/(diff/60)).toFixed(1):"-";
-}
-
-history.innerHTML+=`
-<div class="card">
-${del}
-<b>${doc.id}</b><br>
-🔥 ${d.total} 隻<br>
-🕒 ${d.start||"-"} ～ ${d.end||"-"}<br>
-⏳ ${duration}<br>
-⚡ 平均 ${avg} 隻/小時
-${edit}
-</div>`;
-});
-
-if(max>0){
-record.innerHTML="🏆 最高單日："+max+" 隻（"+maxDate+"）";
 }
 });
 
-function deleteHistory(id){
-if(!isCreator)return;
-db.collection("historyDays").doc(id).delete();
-}
-
-function editHistory(id,total,start,end){
-if(!isCreator)return;
-let newTotal=prompt("擊殺數",total);
-let newStart=prompt("開始時間",start);
-let newEnd=prompt("結束時間",end);
-db.collection("historyDays").doc(id).update({
-total:parseInt(newTotal),
-start:newStart,
-end:newEnd
-});
+function showMilestone(num){
+milestone.innerHTML="🎉 "+num+" 達成！";
+milestone.classList.add("milestoneShow");
+setTimeout(()=>{
+milestone.classList.remove("milestoneShow");
+},3000);
 }
 </script>
-
 </body>
 </html>
