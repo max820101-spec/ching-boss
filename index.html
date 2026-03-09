@@ -97,39 +97,6 @@ opacity:0;
 transition:0.5s;
 }
 
-.milestoneShow{opacity:1;transform:scale(1.1);}
-.flash{animation:flashAnim 0.6s ease;}
-
-@keyframes flashAnim{
-0%{transform:scale(1);}
-50%{transform:scale(1.25);}
-100%{transform:scale(1);}
-}
-
-.level1{color:#ffd600;text-shadow:0 0 10px #ffd600;}
-.level2{color:#00e676;text-shadow:0 0 12px #00e676;}
-.level3{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
-.level4{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
-.level5{color:#ff1744;text-shadow:0 0 15px #ff1744;}
-.level6{
-background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-font-weight:bold;
-}
-
-.m50{color:#ffd600;text-shadow:0 0 10px #ffd600;}
-.m100{color:#00e676;text-shadow:0 0 12px #00e676;}
-.m120{color:#00b0ff;text-shadow:0 0 12px #00b0ff;}
-.m150{color:#aa00ff;text-shadow:0 0 15px #aa00ff;}
-.m200{color:#ff1744;text-shadow:0 0 15px #ff1744;}
-.m250{
-background:linear-gradient(45deg,red,orange,yellow,green,cyan,blue,purple);
--webkit-background-clip:text;
--webkit-text-fill-color:transparent;
-font-weight:bold;
-}
-
 h3{margin-top:25px;color:#7fdfff;}
 </style>
 </head>
@@ -166,21 +133,27 @@ h3{margin-top:25px;color:#7fdfff;}
 <div id="needConfirm"></div>
 
 <script>
+
 const firebaseConfig = {
-  apiKey: "AIzaSyA...",
-  authDomain: "boss02-5f871.firebaseapp.com",
-  projectId: "boss02-5f871",
-  storageBucket: "boss02-5f871.firebasestorage.app",
-  messagingSenderId: "437580339649",
-  appId: "1:437580339649:web:3a3a47c0d886408574f740"
+  apiKey: "AIzaSyARK9NLOTdrqwKDX3dr9isdwEVGCIh5Uno",
+  authDomain: "ching-fishboss-kill.firebaseapp.com",
+  projectId: "ching-fishboss-kill",
+  storageBucket: "ching-fishboss-kill.firebasestorage.app",
+  messagingSenderId: "866574993192",
+  appId: "1:866574993192:web:40b8bb0e8e74bd5d56321d",
+  measurementId: "G-QYG8L3BZB3"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 
 function nowTW(){
 return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Taipei"}));
 }
-function fmt(t){return t.toTimeString().slice(0,5);}
+
+function fmt(t){
+return t.toTimeString().slice(0,5);
+}
 
 setInterval(()=>{
 clock.innerText="台灣時間 "+fmt(nowTW());
@@ -199,6 +172,7 @@ else handleCheck();
 async function addKillCount(){
 const ref=db.collection("stats").doc("today");
 const doc=await ref.get();
+
 if(!doc.exists){
 await ref.set({total:1});
 }else{
@@ -219,10 +193,14 @@ checkInput.value="";
 }
 
 function parseInput(raw,addKill){
+
 let tokens=raw.trim().split(/\s+/);
+
 for(let i=0;i<tokens.length;i+=2){
+
 let ch=tokens[i];
 let arg=tokens[i+1];
+
 if(!ch||!arg) continue;
 
 if(arg==="K"){
@@ -237,19 +215,30 @@ continue;
 }
 
 let time;
+
 if(arg.length===4){
+
 let h=parseInt(arg.slice(0,2));
 let m=parseInt(arg.slice(2));
+
 let d=nowTW();
-d.setHours(h);d.setMinutes(m);
+d.setHours(h);
+d.setMinutes(m);
+
 time=d.getTime();
+
 }else{
+
 time=nowTW().getTime()+parseInt(arg)*60000;
+
 }
 
 db.collection("bosses").doc(ch).set({ch,type:"confirmed",time});
+
 if(addKill) addKillCount();
+
 }
+
 }
 
 function deleteChannel(ch){
@@ -267,44 +256,70 @@ db.collection("bosses").doc(ch).set({ch,type:"need",status:"rob",time:nowTW().ge
 }
 
 function copyConfirmed(){
+
 let text="";
+
 document.querySelectorAll("#confirmed .card").forEach(card=>{
+
 let ch=card.querySelector("b").innerText;
+
 let match=card.innerText.match(/\d{2}:\d{2}/);
+
 if(match) text+=ch+" "+match[0]+"\n";
+
 });
+
 navigator.clipboard.writeText(text.trim());
+
 alert("已複製頻道與時間");
+
 }
 
 function copyNeed(){
+
 let text="";
+
 document.querySelectorAll("#needConfirm .card").forEach(card=>{
+
 let ch=card.querySelector("b").innerText;
+
 text+=ch+"\n";
+
 });
+
 navigator.clipboard.writeText(text.trim());
+
 alert("已複製未確認");
+
 }
 
 db.collection("bosses").onSnapshot(s=>{
+
 let confirmedArr=[],needArr=[];
+
 s.forEach(doc=>{
+
 let d=doc.data();
+
 if(d.type==="confirmed") confirmedArr.push(d);
 if(d.type==="need") needArr.push(d);
+
 });
 
 confirmedArr.sort((a,b)=>a.time-b.time);
 needArr.sort((a,b)=>b.time-a.time);
 
 channelCount.innerHTML="目前 "+confirmedArr.length+" 個頻道";
+
 confirmed.innerHTML="";
 needConfirm.innerHTML="";
 
 confirmedArr.forEach((d,index)=>{
+
 let diff=Math.floor((d.time-nowTW().getTime())/60000);
+
 let cls="";
+
 if(index===0) cls="rank1";
 else if(index===1) cls="rank2";
 else if(index===2) cls="rank3";
@@ -312,6 +327,7 @@ else if(index===3) cls="rank4";
 else if(index===4) cls="rank5";
 
 let text=fmt(new Date(d.time));
+
 if(diff<0) text+="（遲）";
 else if(diff===0) text+=" ⚔️ 重生";
 else if(diff<=5) text+="（剩 "+diff+" 分）";
@@ -323,63 +339,35 @@ confirmed.innerHTML+=`
 <button class="actionBtn btnKill" onclick="markKill('${d.ch}')">🔥 擊殺</button>
 <button class="actionBtn btnRob" onclick="markRob('${d.ch}')">⚠️ 被搶</button>
 </div>`;
+
 });
 
 needArr.forEach(d=>{
+
 let label=d.status==="rob"?"<span class='robbed'>⚠️ 被搶</span>":"🔥 擊殺";
+
 needConfirm.innerHTML+=`
 <div class="card">
 <button class="delBtn" onclick="deleteChannel('${d.ch}')">✕</button>
 <b>${d.ch}</b> ${label}
 </div>`;
+
 });
-});
 
-let lastMilestone=0;
-const milestones=[50,100,120,150,200,250];
-
-db.collection("stats").doc("today").onSnapshot(doc=>{
-let total=doc.exists?(doc.data().total||0):0;
-
-stats.innerHTML="🔥 今日擊殺："+total+" ❗";
-stats.classList.remove("level1","level2","level3","level4","level5","level6");
-stats.classList.add("flash");
-setTimeout(()=>stats.classList.remove("flash"),600);
-
-if(total>=250) stats.classList.add("level6");
-else if(total>=200) stats.classList.add("level5");
-else if(total>=150) stats.classList.add("level4");
-else if(total>=120) stats.classList.add("level3");
-else if(total>=100) stats.classList.add("level2");
-else if(total>=50) stats.classList.add("level1");
-
-for(let m of milestones){
-if(total===m && lastMilestone!==m){
-lastMilestone=m;
-milestone.className="";
-milestone.classList.add("milestoneShow");
-
-let colorClass="";
-if(m===50) colorClass="m50";
-else if(m===100) colorClass="m100";
-else if(m===120) colorClass="m120";
-else if(m===150) colorClass="m150";
-else if(m===200) colorClass="m200";
-else if(m>=250) colorClass="m250";
-
-milestone.classList.add(colorClass);
-milestone.innerHTML="🎉 "+m+" 達成！";
-setTimeout(()=>milestone.classList.remove("milestoneShow"),3000);
-}
-}
 });
 
 async function resetAll(){
+
 if(!confirm("確定重置全部?")) return;
+
 let bosses=await db.collection("bosses").get();
+
 bosses.forEach(doc=>doc.ref.delete());
+
 await db.collection("stats").doc("today").delete();
+
 }
+
 </script>
 </body>
 </html>
