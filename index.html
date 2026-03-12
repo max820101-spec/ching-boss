@@ -25,26 +25,45 @@ margin:auto;
 min-height:100vh;
 }
 
-.logoWrap{text-align:center;margin-bottom:10px;}
+/* LOGO */
+
+.logoWrap{
+text-align:center;
+margin-bottom:15px;
+}
 
 .logo{
 width:420px;
 max-width:95%;
-filter: drop-shadow(0 0 15px rgba(0,200,255,0.8));
+filter: drop-shadow(0 0 18px rgba(0,200,255,0.8));
 }
 
-h2{text-align:center;color:#7fdfff;}
+h2{
+text-align:center;
+color:#7fdfff;
+}
+
+/* 輸入框 */
 
 textarea{
-padding:10px;width:100%;
-border-radius:8px;border:1px solid rgba(255,255,255,0.2);
-background:rgba(0,40,70,0.6);color:#e8f6ff;
+padding:10px;
+width:100%;
+border-radius:8px;
+border:1px solid rgba(255,255,255,0.2);
+background:rgba(0,40,70,0.6);
+color:#e8f6ff;
 margin-bottom:5px;
 }
 
+/* 按鈕 */
+
 button{
-padding:6px 10px;margin:4px;border:none;
-border-radius:8px;cursor:pointer;font-weight:bold;
+padding:6px 10px;
+margin:4px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
 }
 
 .killBtn{background:#ff1744;color:#fff;}
@@ -62,7 +81,7 @@ border:none;
 }
 
 .btnKill{background:#00e676;color:#003300;}
-.btnRob{background:#ff1744;color:#fff;}
+.btnRob{background:#ff5252;color:#fff;}
 
 .delBtn{
 background:#ff5252;
@@ -74,11 +93,13 @@ font-size:12px;
 cursor:pointer;
 }
 
+/* 卡片 */
+
 .card{
 margin:8px 0;
 padding:12px;
 border-radius:12px;
-background:rgba(0,60,90,0.75);
+background:rgba(0,60,90,0.78);
 display:flex;
 align-items:center;
 gap:10px;
@@ -88,13 +109,13 @@ flex-wrap:wrap;
 /* 頻道字體 */
 
 .card b{
-font-size:24px;
+font-size:26px;
 font-weight:900;
 letter-spacing:1px;
 color:#ffffff;
 }
 
-/* 前5名顏色 */
+/* 前五名 */
 
 .rank1{background:#ff6b6b !important;color:#fff;font-weight:bold;}
 .rank2{background:#c77dff !important;color:#fff;font-weight:bold;}
@@ -103,6 +124,8 @@ color:#ffffff;
 .rank5{background:#ffd43b !important;color:#000;font-weight:bold;}
 
 .robbed{color:#ff4d4d;font-weight:bold;}
+
+/* 統計 */
 
 #stats{
 font-size:42px;
@@ -121,7 +144,12 @@ opacity:0;
 transition:0.5s;
 }
 
-h3{margin-top:25px;color:#7fdfff;}
+h3{
+margin-top:25px;
+color:#7fdfff;
+}
+
+/* 左右欄 */
 
 .container{
 display:flex;
@@ -130,17 +158,11 @@ gap:20px;
 
 .column{
 flex:1;
-}
-
-@media (max-width:700px){
-.container{
-flex-direction:column;
-}
+min-width:160px;
 }
 
 </style>
 </head>
-
 <body>
 
 <div class="logoWrap">
@@ -183,8 +205,6 @@ flex-direction:column;
 
 <script>
 
-/* 原 JS 完全未改 */
-
 const firebaseConfig = {
 apiKey: "AIzaSyARK9NLOTdrqwKDX3dr9isdwEVGCIh5Uno",
 authDomain: "ching-fishboss-kill.firebaseapp.com",
@@ -221,10 +241,8 @@ else handleCheck();
 });
 
 async function addKillCount(){
-
 const ref=db.collection("stats").doc("today");
 const doc=await ref.get();
-
 if(!doc.exists){
 await ref.set({total:1});
 }else{
@@ -232,7 +250,6 @@ await ref.update({
 total:firebase.firestore.FieldValue.increment(1)
 });
 }
-
 }
 
 function handleKill(){
@@ -313,12 +330,9 @@ function copyConfirmed(){
 let text="";
 
 document.querySelectorAll("#confirmed .card").forEach(card=>{
-
 let ch=card.querySelector("b").innerText;
 let match=card.innerText.match(/\d{2}:\d{2}/);
-
 if(match) text+=ch+" "+match[0]+"\n";
-
 });
 
 navigator.clipboard.writeText(text.trim());
@@ -331,10 +345,8 @@ function copyNeed(){
 let text="";
 
 document.querySelectorAll("#needConfirm .card").forEach(card=>{
-
 let ch=card.querySelector("b").innerText;
 text+=ch+"\n";
-
 });
 
 navigator.clipboard.writeText(text.trim());
@@ -347,12 +359,9 @@ db.collection("bosses").onSnapshot(s=>{
 let confirmedArr=[],needArr=[];
 
 s.forEach(doc=>{
-
 let d=doc.data();
-
 if(d.type==="confirmed") confirmedArr.push(d);
 if(d.type==="need") needArr.push(d);
-
 });
 
 confirmedArr.sort((a,b)=>a.time-b.time);
@@ -388,7 +397,6 @@ confirmed.innerHTML+=`
 <button class="actionBtn btnKill" onclick="markKill('${d.ch}')">🔥 擊殺</button>
 <button class="actionBtn btnRob" onclick="markRob('${d.ch}')">⚠️ 被搶</button>
 </div>`;
-
 });
 
 needArr.forEach(d=>{
